@@ -1,12 +1,12 @@
-# SelfMemo 2.0
+# SelfMemo 3.0
 
-This repository contains the work for VU Information and Web-Architecture 24/25.
+This repository contains the work for VU Information and Web-Architecture 25/26.
 
-SelfMemo 2.0 is an E-Mail reminder service where you can create reminders for different events (daily, weekly, monthly, yearly, ...).
+SelfMemo 3.0 is an E-Mail reminder service where you can create reminders for different events (daily, weekly, monthly, yearly, ...).
 
-![SelfMemo 2.0 Screenshot](app-screenshot.png "SelfMemo 2.0 Screenshot")
+![SelfMemo 3.0 Screenshot](app-screenshot.png "SelfMemo 3.0 Screenshot")
 
-It is the enhancement of the previous project: https://github.com/Self-Memo/SelfMemo
+It is the enhancement of the previous project: https://github.com/selfmemo2/SelfMemo2
 
 ## Getting Started
 
@@ -86,7 +86,7 @@ References:\
 ## License
 The MIT License (MIT)
 
-Copyright (c) 2025 Maria Seiser, Niklas Lorber, Kilian Weisl
+Copyright (c) 2025 Celine Florian, Stephan Robinig, Piotr Siewiera, Nina Tschikof
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 
