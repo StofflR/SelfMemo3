@@ -64,15 +64,27 @@ export default function ReminderForm({ reminder }: ReminderFormProps) {
         case 'daily':
           setDailyTime(config.time as string);
           setDays(config.repeat);
+          if (config.hasUntilDate) {
+            setHasUntilDate(config.hasUntilDate);
+            setUntilDate(formatTimestampAsDate(config.untilDate));
+          }
           break;
         case 'weekly':
           setWeeklyDay(config.day as string);
           setWeeklyTime(config.time as string);
+          if (config.hasUntilDate) {
+            setHasUntilDate(config.hasUntilDate);
+            setUntilDate(formatTimestampAsDate(config.untilDate));
+          }
           break;
         case 'n-weekly':
           setNWeeklyWeeks(config.weeks);
           setNWeeklyDate(formatTimestampAsDate(config.date));
           setNWeeklyTime(config.time as string);
+          if (config.hasUntilDate) {
+            setHasUntilDate(config.hasUntilDate);
+            setUntilDate(formatTimestampAsDate(config.untilDate));
+          }
           break;
         case 'monthly':
           setMonthlyType(config.type as string);
@@ -80,6 +92,10 @@ export default function ReminderForm({ reminder }: ReminderFormProps) {
           setMonthlyDay(config.day);
           setMonthlyOrderNumber(config.orderNumber as string);
           setMonthlyWeekDay(config.weekDay as string);
+          if (config.hasUntilDate) {
+            setHasUntilDate(config.hasUntilDate);
+            setUntilDate(formatTimestampAsDate(config.untilDate));
+          }
           break;
         case 'yearly':
           setYearlyType(config.type as string);
@@ -88,6 +104,10 @@ export default function ReminderForm({ reminder }: ReminderFormProps) {
           setYearlyOrderNumber(config.orderNumber as string);
           setYearlyWeekDay(config.weekDay as string);
           setYearlyTime(config.time as string);
+          if (config.hasUntilDate) {
+            setHasUntilDate(config.hasUntilDate);
+            setUntilDate(formatTimestampAsDate(config.untilDate));
+          }
           break;
         case 'n-yearly':
           setNYearlyYears(config.years);
@@ -97,6 +117,10 @@ export default function ReminderForm({ reminder }: ReminderFormProps) {
           setNYearlyOrderNumber(config.orderNumber as string);
           setNYearlyWeekDay(config.weekDay as string);
           setNYearlyTime(config.time as string);
+          if (config.hasUntilDate) {
+            setHasUntilDate(config.hasUntilDate);
+            setUntilDate(formatTimestampAsDate(config.untilDate));
+          }
           break;
         default:
           break;
@@ -206,15 +230,27 @@ export default function ReminderForm({ reminder }: ReminderFormProps) {
         case 'daily':
           newConfig.time = dailyTime;
           newConfig.repeat = days;
+          newConfig.hasUntilDate = hasUntilDate;
+          if (hasUntilDate) {
+            newConfig.untilDate = new Date(untilDate).getTime() / 1000;
+          }
           break;
         case 'weekly':
           newConfig.time = weeklyTime;
           newConfig.day = weeklyDay;
+          newConfig.hasUntilDate = hasUntilDate;
+          if (hasUntilDate) {
+            newConfig.untilDate = new Date(untilDate).getTime() / 1000;
+          }
           break;
         case 'n-weekly':
           newConfig.weeks = nWeeklyWeeks;
           newConfig.date = new Date(nWeeklyDate).getTime() / 1000;
           newConfig.time = nWeeklyTime;
+          newConfig.hasUntilDate = hasUntilDate;
+          if (hasUntilDate) {
+            newConfig.untilDate = new Date(untilDate).getTime() / 1000;
+          }
           break;
         case 'monthly':
           newConfig.type = monthlyType;
@@ -222,6 +258,10 @@ export default function ReminderForm({ reminder }: ReminderFormProps) {
           newConfig.day = monthlyDay;
           newConfig.orderNumber = monthlyOrderNumber;
           newConfig.weekDay = monthlyWeekDay;
+          newConfig.hasUntilDate = hasUntilDate;
+          if (hasUntilDate) {
+            newConfig.untilDate = new Date(untilDate).getTime() / 1000;
+          }
           break;
         case 'yearly':
           newConfig.type = yearlyType;
@@ -230,6 +270,11 @@ export default function ReminderForm({ reminder }: ReminderFormProps) {
           newConfig.orderNumber = yearlyOrderNumber;
           newConfig.weekDay = yearlyWeekDay;
           newConfig.time = yearlyTime;
+          newConfig.hasUntilDate = hasUntilDate;
+          if (hasUntilDate) {
+            newConfig.untilDate = new Date(untilDate).getTime() / 1000;
+          }
+          break;
         case 'n-yearly':
           newConfig.years = nYearlyYears;
           newConfig.type = nYearlyType;
@@ -238,6 +283,10 @@ export default function ReminderForm({ reminder }: ReminderFormProps) {
           newConfig.orderNumber = nYearlyOrderNumber;
           newConfig.weekDay = nYearlyWeekDay;
           newConfig.time = nYearlyTime;
+          newConfig.hasUntilDate = hasUntilDate;
+          if (hasUntilDate) {
+            newConfig.untilDate = new Date(untilDate).getTime() / 1000;
+          }
           break;
         default:
           break;
@@ -377,6 +426,16 @@ export default function ReminderForm({ reminder }: ReminderFormProps) {
   const [nYearlyTime, setNYearlyTime] = useState<string>('00:00');
   const handleNYearlyTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setNYearlyTime(e.target.value);
+  };
+
+  /** UNTIL DATE PROPS */
+  const [hasUntilDate, setHasUntilDate] = useState<boolean>(false);
+  const handleHasUntilDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setHasUntilDate(e.target.checked);
+  };
+  const [untilDate, setUntilDate] = useState<string>(formatTimestampAsDate(Math.round(new Date().getTime() / 1000)));
+  const handleUntilDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setUntilDate(e.target.value);
   };
 
   return (
@@ -742,6 +801,35 @@ export default function ReminderForm({ reminder }: ReminderFormProps) {
           </div>
         )}
       </div>
+
+      {/* Until Date */}
+      {reminderFormData.type !== 'one-time' && reminderFormData.type !== '' && (
+        <div className="mb-5">
+          <input
+            className=""
+            type="checkbox"
+            name="hasUntilDate"
+            id="hasUntilDate"
+            checked={hasUntilDate}
+            onChange={handleHasUntilDateChange}
+          /> <label htmlFor="hasUntilDate">Run reminder until a specific date</label>
+          {hasUntilDate && (
+            <div className="mt-2">
+              <label className="block text-gray-700 font-medium mb-2" htmlFor="untilDate">
+                Until Date
+              </label>
+              <input
+                onChange={handleUntilDateChange}
+                value={untilDate}
+                type="date"
+                id="untilDate"
+                name="untilDate"
+                className={`w-full p-2 border rounded-lg border-gray-300`}
+              />
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Warnings */}
       <div className="mb-5">

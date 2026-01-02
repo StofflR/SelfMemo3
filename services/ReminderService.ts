@@ -82,6 +82,7 @@ export class ReminderService {
             return [];
         }
 
+
         createdReminders.push({
             timestamp: config.timestamp,
             isWarning: false
@@ -118,6 +119,11 @@ export class ReminderService {
 
         timestamps.forEach(async (calculatedTimestamp) => {
             const adjustedCalculatedTimestamp = Math.round(calculatedTimestamp / 1000);
+
+            // Check if reminder is beyond untilDate
+            if (config.hasUntilDate && adjustedCalculatedTimestamp > config.untilDate) {
+                return;
+            }
 
             // await this.saveScheduledReminderInDb(reminder.id, adjustedCalculatedTimestamp, false);
             createdReminders.push({
@@ -162,6 +168,11 @@ export class ReminderService {
 
         const adjustedCalculatedTimestamp = Math.round(timestamp / 1000);
 
+        // Check if reminder is beyond untilDate
+        if (config.hasUntilDate && adjustedCalculatedTimestamp > config.untilDate) {
+            return createdReminders;
+        }
+
         createdReminders.push({
             timestamp: adjustedCalculatedTimestamp,
             isWarning: false
@@ -198,6 +209,11 @@ export class ReminderService {
         const timestamp = this.getNextOccurrenceForNWeekly(nowDate, weeks, startDate, time);
 
         const adjustedCalculatedTimestamp = Math.round(timestamp / 1000);
+
+        // Check if reminder is beyond untilDate
+        if (config.hasUntilDate && adjustedCalculatedTimestamp > config.untilDate) {
+            return createdReminders;
+        }
 
         createdReminders.push({
             timestamp: adjustedCalculatedTimestamp,
@@ -237,6 +253,11 @@ export class ReminderService {
         const timestamp = type == "monthlyType1" ? this.getNextOccurenceForMonthlyType1(nowDate, day, time) : this.getNextOccurenceForMonthlyType2(nowDate, time, this.mapOrderStringToNumber(orderNumber), weekDay);
 
         const adjustedCalculatedTimestamp = Math.round(timestamp / 1000);
+
+        // Check if reminder is beyond untilDate
+        if (config.hasUntilDate && adjustedCalculatedTimestamp > config.untilDate) {
+            return createdReminders;
+        }
 
         createdReminders.push({
             timestamp: adjustedCalculatedTimestamp,
@@ -278,6 +299,11 @@ export class ReminderService {
 
         const adjustedCalculatedTimestamp = Math.round(timestamp / 1000);
 
+        // Check if reminder is beyond untilDate
+        if (config.hasUntilDate && adjustedCalculatedTimestamp > config.untilDate) {
+            return createdReminders;
+        }
+
         createdReminders.push({
             timestamp: adjustedCalculatedTimestamp,
             isWarning: false
@@ -318,6 +344,11 @@ export class ReminderService {
         const timestamp = type == "yearlyType1" ? this.getNextOccurenceForNYearlyType1(nowDate, this.mapMonthStringToNumber(month), day, time, years) : this.getNextOccurenceForNYearlyType2(nowDate, this.mapMonthStringToNumber(month), this.mapOrderStringToNumber(orderNumber), weekDay, time, years);
 
         const adjustedCalculatedTimestamp = Math.round(timestamp / 1000);
+
+        // Check if reminder is beyond untilDate
+        if (config.hasUntilDate && adjustedCalculatedTimestamp > config.untilDate) {
+            return createdReminders;
+        }
 
         createdReminders.push({
             timestamp: adjustedCalculatedTimestamp,
