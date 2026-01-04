@@ -38,3 +38,4 @@ next-env.d.ts
 
 prisma/dev.db-journal
 /prisma/dev.db
+**/__pycache__/*

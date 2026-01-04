@@ -1,0 +1,24 @@
+[Unit]
+Description=Periodic GET Request Trigger Service
+After=network.target
+
+[Service]
+Type=simple
+User=selfmemo
+Group=selfmemo
+WorkingDirectory=/opt/trigger_service
+ExecStart=/usr/bin/python3 /opt/trigger_service/trigger_service.py
+Restart=always
+RestartSec=10
+StandardOutput=append:/var/log/trigger_service.log
+StandardError=append:/var/log/trigger_service.log
+
+# Security hardening
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/log
+
+[Install]
+WantedBy=multi-user.target

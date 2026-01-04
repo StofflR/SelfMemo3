@@ -1,0 +1,23 @@
+[Unit]
+Description=SelfMemo3 Next.js Application
+After=network.target
+
+[Service]
+Type=simple
+User=selfmemo
+Group=selfmemo
+WorkingDirectory=/opt/selfmemo
+Environment="NODE_ENV=production"
+Environment="PORT=3000"
+ExecStart=/usr/bin/npm start
+Restart=always
+RestartSec=10
+StandardOutput=append:/var/log/selfmemo.log
+StandardError=append:/var/log/selfmemo.log
+
+# Security hardening
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
