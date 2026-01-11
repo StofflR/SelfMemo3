@@ -33,15 +33,22 @@ export default function UsersPage() {
 
   const { data, error, isLoading } = useApiSwr<User[]>(url);
 
+  const [username, setUsername] = useState<string>("");
   const [email, setEmail] = useState<string>("");
   const [firstName, setFirstName] = useState<string>("");
   const [lastName, setLastName] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [role, setRole] = useState<string>("");
-  const [errors, setErrors] = useState<{ email?: string; password?: string; role?: string }>({});
+  const [errors, setErrors] = useState<{ username?: string; email?: string; password?: string; role?: string }>({});
 
   const validateFields = () => {
-    const newErrors: { email?: string; password?: string; role?: string } = {};
+    const newErrors: { username?: string; email?: string; password?: string; role?: string } = {};
+
+    if (!username) {
+      newErrors.username = "Username is required.";
+    } else if (username.length < 3) {
+      newErrors.username = "Username must be at least 3 characters.";
+    }
 
     if (!email) {
       newErrors.email = "Email is required.";
@@ -71,7 +78,7 @@ export default function UsersPage() {
       const response = await fetch("/api/users", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, role, password, firstName, lastName }),
+        body: JSON.stringify({ username, email, role, password, firstName, lastName }),
       });
 
       if (!response.ok) {
@@ -80,9 +87,12 @@ export default function UsersPage() {
       }
 
       toast.success("User created!", "You have successfully created a new user.");
+      setUsername("");
       setEmail("");
       setRole("");
       setPassword("");
+      setFirstName("");
+      setLastName("");
       mutate(url);
 
     } catch (error: any) {
@@ -127,6 +137,16 @@ export default function UsersPage() {
                     onChange={(e) => setLastName(e.target.value)}
                     placeholder="Enter Last-Name"
                   />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">Username *</label>
+                  <Input
+                    value={username}
+                    type='text'
+                    onChange={(e) => setUsername(e.target.value)}
+                    placeholder="Enter Username"
+                  />
+                  {errors.username && <p className="text-red-500 text-sm mt-1">{errors.username}</p>}
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-2">E-Mail</label>
@@ -182,7 +202,7 @@ export default function UsersPage() {
           data={data || []}
           entity="users"
           mutateKey={url}
-          fields={["id", "email", "firstName", "lastName", "role"]}
+          fields={["id", "username", "email", "firstName", "lastName", "role"]}
           combineFieldsCallbacks={{}}
           fieldFormatter={{
             role: (role) => role.charAt(0).toUpperCase() + role.slice(1),

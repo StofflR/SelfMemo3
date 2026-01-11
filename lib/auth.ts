@@ -31,21 +31,23 @@ export const {
   providers: [
     CredentialsProvider({
       credentials: {
-        email: { label: "Email", type: "email", placeholder: "admin@test.com" },
+        emailOrUsername: { label: "Username or Email", type: "text", placeholder: "username or email" },
         password: { label: "Password", type: "password" }
       },
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) {
-          throw new Error("Email and password are required.");
+        if (!credentials?.emailOrUsername || !credentials?.password) {
+          throw new Error("Username/Email and password are required.");
         }
 
-        const email = credentials.email as string;
+        const emailOrUsername = credentials.emailOrUsername as string;
         const password = credentials.password as string;
 
-        const user = await prisma.user.findUnique({
-          where: {
-            email: email,
-          },
+        // Check if input is email or username
+        const isEmail = emailOrUsername.includes('@');
+        const user = await prisma.user.findFirst({
+          where: isEmail 
+            ? { email: emailOrUsername }
+            : { username: emailOrUsername },
         })
 
         if (user) {

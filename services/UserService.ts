@@ -135,6 +135,7 @@ export class UserService {
         }
 
         const adminUser: CreateUserDto = {
+            username: 'admin',
             firstName: 'Admin',
             lastName: 'User',
             email: process.env.ADMIN_EMAIL,
