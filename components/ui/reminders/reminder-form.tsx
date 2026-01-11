@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation';
 import { formatTimestampAsDate, formatTimestampAsDateTime } from '@/lib/utils';
 import { Button } from '../button';
 const tzdata = require('tzdata');
+import templates from 'public/reminder-templates.json';
 
 type ReminderFormDataType = {
   id: string;
@@ -142,6 +143,20 @@ export default function ReminderForm({ reminder }: ReminderFormProps) {
       }));
     setTimezones(timezoneList);
   }, []);
+
+  // Handle template selection
+  const handleTemplateChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const templateId = e.target.value;
+    if (templateId) {
+      const selectedTemplate = templates.templates.find(t => t.id === templateId);
+      if (selectedTemplate) {
+        setReminderFormData((prev) => ({
+          ...prev,
+          description: selectedTemplate.description,
+        }));
+      }
+    }
+  };
 
   // handle form input changes for basic fields (name, description, type, timezone)
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
@@ -474,6 +489,27 @@ export default function ReminderForm({ reminder }: ReminderFormProps) {
         {formErrors.name && <p className="text-red-500 text-sm mt-1">{formErrors.name}</p>}
       </div>
 
+      {/* Template Selection */}
+      <div className="mb-4">
+        <label className="block text-gray-700 font-medium mb-2" htmlFor="template">
+          Use Template (Optional)
+        </label>
+        <select
+          id="template"
+          name="template"
+          onChange={handleTemplateChange}
+          className="w-full p-2 border rounded-lg border-gray-300"
+        >
+          <option value="">-- Select a template --</option>
+          {templates.templates.map((template) => (
+            <option key={template.id} value={template.id}>
+              {template.name}
+            </option>
+          ))}
+        </select>
+        <p className="text-gray-500 text-sm mt-1">Select a template to auto-fill the description field</p>
+      </div>
+
       {/* Description */}
       <div className="mb-4">
         <label className="block text-gray-700 font-medium mb-2" htmlFor="name">
@@ -484,6 +520,7 @@ export default function ReminderForm({ reminder }: ReminderFormProps) {
           name="description"
           onChange={handleChange}
           value={reminderFormData.description}
+          rows={6}
           className={`w-full p-2 border rounded-lg ${formErrors.name ? 'border-red-500' : 'border-gray-300'
             }`}
         ></textarea>
