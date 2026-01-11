@@ -15,7 +15,14 @@ type INFUpdateUserPasswordDto = Omit<UpdateUserPasswordDto, 'id'>;
 
 const UserSettingsForm: FC<INFUserSettingsFormProps> = ({ user }) => {
 
-    const [updateUser, setUpdateUser] = useState<UpdateUserDto>({ ...user, role: user.role as "user" | "admin" });
+    const [updateUser, setUpdateUser] = useState<UpdateUserDto>({ 
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        role: user.role as "user" | "admin"
+    });
     const [updateUserPassword, setUpdateUserPassword] = useState<INFUpdateUserPasswordDto>({ currentPassword: '', newPassword: '' });
     const [secondUserPassword, setSecondUserPassword] = useState<string>('');
     const [passwordError, setPasswordError] = useState<string | null>(null);
@@ -158,6 +165,23 @@ const UserSettingsForm: FC<INFUserSettingsFormProps> = ({ user }) => {
                                         onChange={handleChange}
                                         type="text"
                                         autoComplete="family-name"
+                                        className="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="sm:col-span-6">
+                                <label htmlFor="username" className="block text-sm/6 font-medium text-gray-900">
+                                    Username
+                                </label>
+                                <div className="mt-2">
+                                    <input
+                                        id="username"
+                                        name="username"
+                                        type="text"
+                                        value={updateUser.username || ''}
+                                        onChange={handleChange}
+                                        autoComplete="username"
                                         className="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
                                     />
                                 </div>

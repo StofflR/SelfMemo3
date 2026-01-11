@@ -10,6 +10,7 @@ import { Button } from '../button';
 
 type UserFormDataType = {
   id: string;
+  username: string;
   email: string;
   password: string;
   role: string;
@@ -23,6 +24,7 @@ interface UserFormProps {
 
 const defaultUserValues: UserFormDataType = {
   id: '',
+  username: '',
   email: '',
   password: '',
   role: '',
@@ -127,6 +129,24 @@ export default function UserForm({ user }: UserFormProps) {
             }`}
         />
         {formErrors.lastName && <p className="text-red-500 text-sm mt-1">{formErrors.lastName}</p>}
+      </div>
+
+      {/* Username */}
+      <div className="mb-4">
+        <label className="block text-gray-700 font-medium mb-2" htmlFor="username">
+          Username *
+        </label>
+        <input
+          required
+          id="username"
+          name="username"
+          type="text"
+          value={userFormData.username}
+          onChange={handleChange}
+          className={`w-full p-2 border rounded-lg ${formErrors.username ? 'border-red-500' : 'border-gray-300'
+            }`}
+        />
+        {formErrors.username && <p className="text-red-500 text-sm mt-1">{formErrors.username}</p>}
       </div>
 
       {/* Email */}

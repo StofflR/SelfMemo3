@@ -11,7 +11,7 @@ import { useState } from 'react';
 import { signIn } from 'next-auth/react';
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('');
+  const [emailOrUsername, setEmailOrUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
 
@@ -19,7 +19,7 @@ export default function LoginPage() {
     e.preventDefault();
     setError(null);
     const result = await signIn('credentials', {
-      email,
+      emailOrUsername,
       password,
       redirect: false
     });
@@ -38,7 +38,7 @@ export default function LoginPage() {
         <CardHeader>
           <CardTitle className="text-2xl">Login</CardTitle>
           <CardDescription>
-            Please sign in with your email and password.
+            Please sign in with your username or email and password.
           </CardDescription>
         </CardHeader>
         <CardFooter>
@@ -48,12 +48,12 @@ export default function LoginPage() {
             )}
             <div className="mb-4">
               <label className="block text-sm font-medium text-gray-700">
-                Email
+                Username or Email
               </label>
               <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                type="text"
+                value={emailOrUsername}
+                onChange={(e) => setEmailOrUsername(e.target.value)}
                 required
                 className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring focus:ring-blue-300"
               />
