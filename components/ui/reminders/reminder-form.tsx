@@ -7,6 +7,7 @@ import { useToast } from 'hooks/useToast';
 import { useRouter } from 'next/navigation';
 import { formatTimestampAsDate, formatTimestampAsDateTime } from '@/lib/utils';
 import { Button } from '../button';
+const tzdata = require('tzdata');
 
 type ReminderFormDataType = {
   id: string;
@@ -21,6 +22,7 @@ type ReminderFormDataType = {
   warningNumber: number | null;
   warningInterval: string | null;
   warningIntervalNumber: number | null;
+  timezone: string | null;
 };
 
 interface ReminderFormProps {
@@ -40,12 +42,14 @@ const defaultReminderValues: ReminderFormDataType = {
   warningNumber: 1,
   warningInterval: '',
   warningIntervalNumber: 1,
+  timezone: 'Europe/Vienna',
 };
 
 export default function ReminderForm({ reminder }: ReminderFormProps) {
   const toast = useToast();
   const router = useRouter();
   const [isUpdate, setIsUpdate] = useState(false);
+  const [timezones, setTimezones] = useState<Array<{ name: string; alternativeName: string }>>([]);
   const [reminderFormData, setReminderFormData] = useState<ReminderFormDataType>(defaultReminderValues);
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -128,7 +132,18 @@ export default function ReminderForm({ reminder }: ReminderFormProps) {
     }
   }, [reminder]);
 
-  // handle form input changes for basic fields (name, description, type)
+  // Load timezones from tzdata
+  useEffect(() => {
+    const timezoneList = Object.keys(tzdata.zones)
+      .sort()
+      .map(name => ({
+        name,
+        alternativeName: name.replace(/_/g, ' ')
+      }));
+    setTimezones(timezoneList);
+  }, []);
+
+  // handle form input changes for basic fields (name, description, type, timezone)
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setReminderFormData((prev) => ({
@@ -149,8 +164,8 @@ export default function ReminderForm({ reminder }: ReminderFormProps) {
       [name]: (name === 'timestamp' || name === 'warningNumber' || name === 'warningIntervalNumber') ? Number(value) : value,
     }));
 
-    if(!isUpdate) {
-      switch(value) {
+    if (!isUpdate) {
+      switch (value) {
         case 'one-time':
           defaultReminderValues.warningInterval = 'day';
           break;
@@ -473,6 +488,27 @@ export default function ReminderForm({ reminder }: ReminderFormProps) {
             }`}
         ></textarea>
         {formErrors.name && <p className="text-red-500 text-sm mt-1">{formErrors.name}</p>}
+      </div>
+
+      {/* Timezone */}
+      <div className="mb-4">
+        <label className="block text-gray-700 font-medium mb-2" htmlFor="timezone">
+          Timezone
+        </label>
+        <select
+          id="timezone"
+          name="timezone"
+          value={reminderFormData.timezone ?? 'Europe/Vienna'}
+          onChange={handleChange}
+          className={`w-full p-2 border rounded-lg ${formErrors.timezone ? 'border-red-500' : 'border-gray-300'}`}
+        >
+          {timezones.map((tz) => (
+            <option key={tz.name} value={tz.name}>
+              {tz.name} ({tz.alternativeName})
+            </option>
+          ))}
+        </select>
+        {formErrors.timezone && <p className="text-red-500 text-sm mt-1">{formErrors.timezone}</p>}
       </div>
 
       {/* Type */}
@@ -844,7 +880,7 @@ export default function ReminderForm({ reminder }: ReminderFormProps) {
         {reminderFormData.hasWarnings && (
           <div className="mb-4">
             Additionally, before sending the final reminder, send me
-            <input onChange={handleChange} value={reminderFormData.warningNumber ?? undefined} id="warningNumber" name="warningNumber" type="number" className="mx-2 w-14 p-2 border rounded-lg" min="1"/>
+            <input onChange={handleChange} value={reminderFormData.warningNumber ?? undefined} id="warningNumber" name="warningNumber" type="number" className="mx-2 w-14 p-2 border rounded-lg" min="1" />
             reminder(s)
             <input onChange={handleChange} value={reminderFormData.warningIntervalNumber ?? undefined} id="warningIntervalNumber" name="warningIntervalNumber" type="number" className="mx-2 w-14 p-2 border rounded-lg" min="0" />
             <select
