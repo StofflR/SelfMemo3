@@ -58,6 +58,7 @@ export async function POST(request: NextRequest) {
       warningNumber: requestBody.warningNumber,
       warningInterval: requestBody.warningInterval,
       warningIntervalNumber: requestBody.warningIntervalNumber,
+      timezone: requestBody.timezone,
     });
 
     const reminderService = ReminderService.getInstance();
