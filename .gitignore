@@ -26,8 +26,8 @@ yarn-error.log*
 .pnpm-debug.log*
 
 # env files
-.env*
-!.env.example
+.env
+!.env
 
 # vercel
 .vercel
@@ -38,3 +38,4 @@ next-env.d.ts
 
 prisma/dev.db-journal
 /prisma/dev.db
+/.env
