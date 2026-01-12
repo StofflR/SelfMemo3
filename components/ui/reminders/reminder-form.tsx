@@ -9,6 +9,8 @@ import { formatTimestampAsDate, formatTimestampAsDateTime } from '@/lib/utils';
 import { Button } from '../button';
 const tzdata = require('tzdata');
 import templates from 'public/reminder-templates.json';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
 
 type ReminderFormDataType = {
   id: string;
@@ -415,13 +417,7 @@ export default function ReminderForm({ reminder }: ReminderFormProps) {
   const handleYearlyDayChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setYearlyDay(parseInt(e.target.value));
   };
-
-  const [yearlyDate, setYearlyDate] = useState<string>(
-    formatTimestampAsDate(Math.round(new Date().getTime() / 1000))
-  );
-  const handleYearlyDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setYearlyDate(e.target.value);
-  };
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
 
   const [yearlyOrderNumber, setYearlyOrderNumber] = useState<string>('first');
   const handleYearlyOrderNumberChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -478,7 +474,6 @@ export default function ReminderForm({ reminder }: ReminderFormProps) {
 
   return (
     <form onSubmit={handleSubmit}>
-
       {/* Name */}
       <div className="mb-4">
         <label className="block text-gray-700 font-medium mb-2" htmlFor="name">
@@ -502,7 +497,10 @@ export default function ReminderForm({ reminder }: ReminderFormProps) {
 
       {/* Template Selection */}
       <div className="mb-4">
-        <label className="block text-gray-700 font-medium mb-2" htmlFor="template">
+        <label
+          className="block text-gray-700 font-medium mb-2"
+          htmlFor="template"
+        >
           Use Template (Optional)
         </label>
         <select
@@ -518,7 +516,9 @@ export default function ReminderForm({ reminder }: ReminderFormProps) {
             </option>
           ))}
         </select>
-        <p className="text-gray-500 text-sm mt-1">Select a template to auto-fill the description field</p>
+        <p className="text-gray-500 text-sm mt-1">
+          Select a template to auto-fill the description field
+        </p>
       </div>
 
       {/* Description */}
@@ -532,8 +532,9 @@ export default function ReminderForm({ reminder }: ReminderFormProps) {
           onChange={handleChange}
           value={reminderFormData.description}
           rows={6}
-          className={`w-full p-2 border rounded-lg ${formErrors.name ? 'border-red-500' : 'border-gray-300'
-            }`}
+          className={`w-full p-2 border rounded-lg ${
+            formErrors.name ? 'border-red-500' : 'border-gray-300'
+          }`}
         ></textarea>
         {formErrors.name && (
           <p className="text-red-500 text-sm mt-1">{formErrors.name}</p>
@@ -542,7 +543,10 @@ export default function ReminderForm({ reminder }: ReminderFormProps) {
 
       {/* Timezone */}
       <div className="mb-4">
-        <label className="block text-gray-700 font-medium mb-2" htmlFor="timezone">
+        <label
+          className="block text-gray-700 font-medium mb-2"
+          htmlFor="timezone"
+        >
           Timezone
         </label>
         <select
@@ -558,7 +562,9 @@ export default function ReminderForm({ reminder }: ReminderFormProps) {
             </option>
           ))}
         </select>
-        {formErrors.timezone && <p className="text-red-500 text-sm mt-1">{formErrors.timezone}</p>}
+        {formErrors.timezone && (
+          <p className="text-red-500 text-sm mt-1">{formErrors.timezone}</p>
+        )}
       </div>
 
       {/* Type */}
@@ -821,48 +827,25 @@ export default function ReminderForm({ reminder }: ReminderFormProps) {
                 htmlFor="yearlyType1"
                 className="ml-3 text-sm/6 font-medium text-gray-900 flex items-center"
               >
-                <span>on </span>
-                <input
-                  onChange={handleYearlyDateChange}
-                  value={yearlyDate}
-                  type="date"
-                  id="yearlyDate"
-                  name="yearlyDate"
-                  className={`w-full p-2 border rounded-lg ${
-                    formErrors.name ? 'border-red-500' : 'border-gray-300'
-                  }`}
+                <span>on the</span>
+                <DatePicker
+                  selected={selectedDate}
+                  onChange={(date: Date) => {
+                    if (date) {
+                      setSelectedDate(date);
+                      setYearlyMonth(
+                        date
+                          .toLocaleString('en-US', { month: 'long' })
+                          .toLowerCase()
+                      );
+                      setYearlyDay(date.getDate());
+                    }
+                  }}
+                  dateFormat="d MMMM"
+                  showMonthDropdown
+                  showYearDropdown={false}
+                  className="w-32 mx-2 p-2 border rounded-lg border-gray-300"
                 />
-                {/*<input*/}
-                {/*  onChange={(e) => {*/}
-                {/*    const date = new Date(e.target.value);*/}
-                {/*    setYearlyMonth(*/}
-                {/*      date*/}
-                {/*        .toLocaleString('en-US', { month: 'long' })*/}
-                {/*        .toLowerCase()*/}
-                {/*    );*/}
-                {/*    setYearlyDay(date.getDate());*/}
-                {/*  }}*/}
-                {/*  value={`${String(*/}
-                {/*    [*/}
-                {/*      'january',*/}
-                {/*      'february',*/}
-                {/*      'march',*/}
-                {/*      'april',*/}
-                {/*      'may',*/}
-                {/*      'june',*/}
-                {/*      'july',*/}
-                {/*      'august',*/}
-                {/*      'september',*/}
-                {/*      'october',*/}
-                {/*      'november',*/}
-                {/*      'december'*/}
-                {/*    ].indexOf(yearlyMonth) + 1*/}
-                {/*  ).padStart(2, '0')}-${String(yearlyDay).padStart(2, '0')}`}*/}
-                {/*  type="date"*/}
-                {/*  id="yearlyDate"*/}
-                {/*  name="yearlyDate"*/}
-                {/*  className={`p-2 mx-2 border rounded-lg ${formErrors.name ? 'border-red-500' : 'border-gray-300'}`}*/}
-                {/*/>*/}
               </label>
             </div>
             <div className="flex items-center">
@@ -911,13 +894,13 @@ export default function ReminderForm({ reminder }: ReminderFormProps) {
                   <option value="saturday">Saturday</option>
                   <option value="sunday">Sunday</option>
                 </select>
-                <span>of </span>
+                <span>of</span>
                 <select
                   id="yearlyMonth"
                   name="yearlyMonth"
                   value={yearlyMonth}
                   onChange={handleYearlyMonthChange}
-                  className={`p-2 border rounded-lg ${
+                  className={`mx-2 p-2 border rounded-lg ${
                     formErrors.type ? 'border-red-500' : 'border-gray-300'
                   }`}
                 >
@@ -936,23 +919,26 @@ export default function ReminderForm({ reminder }: ReminderFormProps) {
                 </select>
               </label>
             </div>
-            <div className="my-2">at</div>
-            <input
-              onChange={handleYearlyTimeChange}
-              value={yearlyTime}
-              type="time"
-              id="yearlyTime"
-              name="yearlyTime"
-              className={`w-full p-2 border rounded-lg ${
-                formErrors.name ? 'border-red-500' : 'border-gray-300'
-              }`}
-            />
+            <div className="my-2">
+              at
+              <input
+                onChange={handleYearlyTimeChange}
+                value={yearlyTime}
+                type="time"
+                id="yearlyTime"
+                name="yearlyTime"
+                className={`mx-2 w-32 p-2 border rounded-lg ${
+                  formErrors.name ? 'border-red-500' : 'border-gray-300'
+                }`}
+              />
+            </div>
           </div>
         )}
 
         {reminderFormData.type === 'n-yearly' && (
           <div className="mb-4">
-            <div className="my-2">This event occurs every</div>
+            {/*<div className="my-2"></div>*/}
+            This event occurs every
             <input
               onChange={handleNYearlyYearsChange}
               value={nYearlyYears}
@@ -960,33 +946,11 @@ export default function ReminderForm({ reminder }: ReminderFormProps) {
               min="1"
               id="nYearlyYears"
               name="nYearlyYears"
-              className={`w-full p-2 border rounded-lg ${
+              className={`mx-2 w-12 p-2 border rounded-lg ${
                 formErrors.nYearlyYears ? 'border-red-500' : 'border-gray-300'
               }`}
-            />
-            <div className="my-2">year(s), every</div>
-            <select
-              id="nYearlyMonth"
-              name="nYearlyMonth"
-              value={nYearlyMonth}
-              onChange={handleNYearlyMonthChange}
-              className={`p-2 border rounded-lg ${
-                formErrors.nYearlyMonth ? 'border-red-500' : 'border-gray-300'
-              }`}
-            >
-              <option value="january">January</option>
-              <option value="february">February</option>
-              <option value="march">March</option>
-              <option value="april">April</option>
-              <option value="may">May</option>
-              <option value="june">June</option>
-              <option value="july">July</option>
-              <option value="august">August</option>
-              <option value="september">September</option>
-              <option value="october">October</option>
-              <option value="november">November</option>
-              <option value="december">December</option>
-            </select>
+            />{' '}
+            year(s)
             <div className="flex items-center my-2">
               <input
                 checked={nYearlyType === 'yearlyType1'}
@@ -1002,17 +966,24 @@ export default function ReminderForm({ reminder }: ReminderFormProps) {
                 className="ml-3 text-sm/6 font-medium text-gray-900 flex items-center"
               >
                 <span>on the</span>
-                <input
-                  onChange={handleNYearlyDayChange}
-                  value={nYearlyDay}
-                  type="number"
-                  min="1"
-                  max="31"
-                  id="nYearlyDay"
-                  name="nYearlyDay"
-                  className={`w-[50px] p-2 mx-2 border rounded-lg ${formErrors.nYearlyDay ? 'border-red-500' : 'border-gray-300'}`}
+                <DatePicker
+                  selected={selectedDate}
+                  onChange={(date: Date) => {
+                    if (date) {
+                      setSelectedDate(date);
+                      setNYearlyMonth(
+                        date
+                          .toLocaleString('en-US', { month: 'long' })
+                          .toLowerCase()
+                      );
+                      setNYearlyDay(date.getDate());
+                    }
+                  }}
+                  dateFormat="d MMMM"
+                  showMonthDropdown
+                  showYearDropdown={false}
+                  className="w-32 mx-2 p-2 border rounded-lg border-gray-300"
                 />
-                <span>day of the month.</span>
               </label>
             </div>
             <div className="flex items-center">
@@ -1061,20 +1032,47 @@ export default function ReminderForm({ reminder }: ReminderFormProps) {
                   <option value="saturday">Saturday</option>
                   <option value="sunday">Sunday</option>
                 </select>
-                <span>of the month</span>
+                <span>of</span>
+                <select
+                  id="nYearlyMonth"
+                  name="nYearlyMonth"
+                  value={nYearlyMonth}
+                  onChange={handleNYearlyMonthChange}
+                  className={`mx-2 p-2 border rounded-lg ${
+                    formErrors.nYearlyMonth
+                      ? 'border-red-500'
+                      : 'border-gray-300'
+                  }`}
+                >
+                  <option value="january">January</option>
+                  <option value="february">February</option>
+                  <option value="march">March</option>
+                  <option value="april">April</option>
+                  <option value="may">May</option>
+                  <option value="june">June</option>
+                  <option value="july">July</option>
+                  <option value="august">August</option>
+                  <option value="september">September</option>
+                  <option value="october">October</option>
+                  <option value="november">November</option>
+                  <option value="december">December</option>
+                </select>
               </label>
             </div>
-            <div className="my-2">at</div>
-            <input
-              onChange={handleNYearlyTimeChange}
-              value={nYearlyTime}
-              type="time"
-              id="nYearlyTime"
-              name="nYearlyTime"
-              className={`w-full p-2 border rounded-lg ${
-                formErrors.nYearlyTime ? 'border-red-500' : 'border-gray-300'
-              }`}
-            />
+            <div className="my-2">
+              at
+              {/*at*/}
+              <input
+                onChange={handleNYearlyTimeChange}
+                value={nYearlyTime}
+                type="time"
+                id="nYearlyTime"
+                name="nYearlyTime"
+                className={`mx-2 w-28 p-2 border rounded-lg ${
+                  formErrors.nYearlyTime ? 'border-red-500' : 'border-gray-300'
+                }`}
+              />
+            </div>
           </div>
         )}
       </div>
