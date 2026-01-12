@@ -9,6 +9,8 @@ import { formatTimestampAsDate, formatTimestampAsDateTime } from '@/lib/utils';
 import { Button } from '../button';
 const tzdata = require('tzdata');
 import templates from 'public/reminder-templates.json';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
 
 type ReminderFormDataType = {
   id: string;
@@ -415,6 +417,8 @@ export default function ReminderForm({ reminder }: ReminderFormProps) {
   const handleYearlyDayChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setYearlyDay(parseInt(e.target.value));
   };
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+
   const [yearlyOrderNumber, setYearlyOrderNumber] = useState<string>('first');
   const handleYearlyOrderNumberChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setYearlyOrderNumber(e.target.value);
@@ -470,7 +474,6 @@ export default function ReminderForm({ reminder }: ReminderFormProps) {
 
   return (
     <form onSubmit={handleSubmit}>
-
       {/* Name */}
       <div className="mb-4">
         <label className="block text-gray-700 font-medium mb-2" htmlFor="name">
@@ -483,15 +486,21 @@ export default function ReminderForm({ reminder }: ReminderFormProps) {
           type="text"
           value={reminderFormData.name}
           onChange={handleChange}
-          className={`w-full p-2 border rounded-lg ${formErrors.name ? 'border-red-500' : 'border-gray-300'
-            }`}
+          className={`w-full p-2 border rounded-lg ${
+            formErrors.name ? 'border-red-500' : 'border-gray-300'
+          }`}
         />
-        {formErrors.name && <p className="text-red-500 text-sm mt-1">{formErrors.name}</p>}
+        {formErrors.name && (
+          <p className="text-red-500 text-sm mt-1">{formErrors.name}</p>
+        )}
       </div>
 
       {/* Template Selection */}
       <div className="mb-4">
-        <label className="block text-gray-700 font-medium mb-2" htmlFor="template">
+        <label
+          className="block text-gray-700 font-medium mb-2"
+          htmlFor="template"
+        >
           Use Template (Optional)
         </label>
         <select
@@ -507,7 +516,9 @@ export default function ReminderForm({ reminder }: ReminderFormProps) {
             </option>
           ))}
         </select>
-        <p className="text-gray-500 text-sm mt-1">Select a template to auto-fill the description field</p>
+        <p className="text-gray-500 text-sm mt-1">
+          Select a template to auto-fill the description field
+        </p>
       </div>
 
       {/* Description */}
@@ -521,15 +532,21 @@ export default function ReminderForm({ reminder }: ReminderFormProps) {
           onChange={handleChange}
           value={reminderFormData.description}
           rows={6}
-          className={`w-full p-2 border rounded-lg ${formErrors.name ? 'border-red-500' : 'border-gray-300'
-            }`}
+          className={`w-full p-2 border rounded-lg ${
+            formErrors.name ? 'border-red-500' : 'border-gray-300'
+          }`}
         ></textarea>
-        {formErrors.name && <p className="text-red-500 text-sm mt-1">{formErrors.name}</p>}
+        {formErrors.name && (
+          <p className="text-red-500 text-sm mt-1">{formErrors.name}</p>
+        )}
       </div>
 
       {/* Timezone */}
       <div className="mb-4">
-        <label className="block text-gray-700 font-medium mb-2" htmlFor="timezone">
+        <label
+          className="block text-gray-700 font-medium mb-2"
+          htmlFor="timezone"
+        >
           Timezone
         </label>
         <select
@@ -545,7 +562,9 @@ export default function ReminderForm({ reminder }: ReminderFormProps) {
             </option>
           ))}
         </select>
-        {formErrors.timezone && <p className="text-red-500 text-sm mt-1">{formErrors.timezone}</p>}
+        {formErrors.timezone && (
+          <p className="text-red-500 text-sm mt-1">{formErrors.timezone}</p>
+        )}
       </div>
 
       {/* Type */}
@@ -559,8 +578,9 @@ export default function ReminderForm({ reminder }: ReminderFormProps) {
           name="type"
           value={reminderFormData.type}
           onChange={handleTypeChange}
-          className={`w-full p-2 border rounded-lg ${formErrors.type ? 'border-red-500' : 'border-gray-300'
-            }`}
+          className={`w-full p-2 border rounded-lg ${
+            formErrors.type ? 'border-red-500' : 'border-gray-300'
+          }`}
         >
           <option></option>
           <option value="one-time">One-time</option>
@@ -578,16 +598,32 @@ export default function ReminderForm({ reminder }: ReminderFormProps) {
         {reminderFormData.type === 'one-time' && (
           <div className="mb-4">
             <div className="my-2">This event occurs once at</div>
-            <input onChange={handleOneTimeTimestampChange} value={oneTimeTimestamp} type="datetime-local" id="oneTimeDateTimestamp" name="oneTimeDateTimestamp" className={`w-full p-2 border rounded-lg ${formErrors.name ? 'border-red-500' : 'border-gray-300'
-              }`} />
+            <input
+              onChange={handleOneTimeTimestampChange}
+              value={oneTimeTimestamp}
+              type="datetime-local"
+              id="oneTimeDateTimestamp"
+              name="oneTimeDateTimestamp"
+              className={`w-full p-2 border rounded-lg ${
+                formErrors.name ? 'border-red-500' : 'border-gray-300'
+              }`}
+            />
           </div>
         )}
 
         {reminderFormData.type === 'daily' && (
           <div className="mb-4">
             <div className="my-2">This event occurs daily at</div>
-            <input onChange={handleDailyTimeChange} value={dailyTime} type="time" id="dailyTime" name="dailyTime" className={`w-full p-2 border rounded-lg ${formErrors.name ? 'border-red-500' : 'border-gray-300'
-              }`} />
+            <input
+              onChange={handleDailyTimeChange}
+              value={dailyTime}
+              type="time"
+              id="dailyTime"
+              name="dailyTime"
+              className={`w-full p-2 border rounded-lg ${
+                formErrors.name ? 'border-red-500' : 'border-gray-300'
+              }`}
+            />
             <div className="my-2">and should be repeated on:</div>
             <div className="flex items-center space-x-4">
               {Object.entries(days).map(([day, isChecked]) => (
@@ -616,8 +652,9 @@ export default function ReminderForm({ reminder }: ReminderFormProps) {
               name="weeklyDay"
               value={weeklyDay}
               onChange={handleWeeklyDayChange}
-              className={`w-full p-2 border rounded-lg ${formErrors.type ? 'border-red-500' : 'border-gray-300'
-                }`}
+              className={`w-full p-2 border rounded-lg ${
+                formErrors.type ? 'border-red-500' : 'border-gray-300'
+              }`}
             >
               <option value="monday">Monday</option>
               <option value="tuesday">Tuesday</option>
@@ -628,57 +665,122 @@ export default function ReminderForm({ reminder }: ReminderFormProps) {
               <option value="sunday">Sunday</option>
             </select>
             <div className="my-2">at</div>
-            <input onChange={handleWeeklyTimeChange} value={weeklyTime} type="time" id="weeklyTime" name="weeklyTime" className={`w-full p-2 border rounded-lg ${formErrors.name ? 'border-red-500' : 'border-gray-300'
-              }`} />
+            <input
+              onChange={handleWeeklyTimeChange}
+              value={weeklyTime}
+              type="time"
+              id="weeklyTime"
+              name="weeklyTime"
+              className={`w-full p-2 border rounded-lg ${
+                formErrors.name ? 'border-red-500' : 'border-gray-300'
+              }`}
+            />
           </div>
         )}
 
         {reminderFormData.type === 'n-weekly' && (
           <div className="mb-4">
             <div className="my-2">This event occurs every</div>
-            <input onChange={handleNWeeklyWeeksChange} value={nWeeklyWeeks} type="number" min="1" id="nWeeklyWeeks" name="nWeeklyWeeks" className={`w-full p-2 border rounded-lg ${formErrors.name ? 'border-red-500' : 'border-gray-300'
-              }`} />
+            <input
+              onChange={handleNWeeklyWeeksChange}
+              value={nWeeklyWeeks}
+              type="number"
+              min="1"
+              id="nWeeklyWeeks"
+              name="nWeeklyWeeks"
+              className={`w-full p-2 border rounded-lg ${
+                formErrors.name ? 'border-red-500' : 'border-gray-300'
+              }`}
+            />
             <div className="my-2">week(s), starting</div>
-            <input onChange={handleNWeeklyDateChange} value={nWeeklyDate} type="date" id="nWeeklyDate" name="nWeeklyDate" className={`w-full p-2 border rounded-lg ${formErrors.name ? 'border-red-500' : 'border-gray-300'
-              }`} />
+            <input
+              onChange={handleNWeeklyDateChange}
+              value={nWeeklyDate}
+              type="date"
+              id="nWeeklyDate"
+              name="nWeeklyDate"
+              className={`w-full p-2 border rounded-lg ${
+                formErrors.name ? 'border-red-500' : 'border-gray-300'
+              }`}
+            />
             <div className="my-2">at</div>
-            <input onChange={handleNWeeklyTimeChange} value={nWeeklyTime} type="time" id="nWeeklyTime" name="nWeeklyTime" className={`w-full p-2 border rounded-lg ${formErrors.name ? 'border-red-500' : 'border-gray-300'
-              }`} />
+            <input
+              onChange={handleNWeeklyTimeChange}
+              value={nWeeklyTime}
+              type="time"
+              id="nWeeklyTime"
+              name="nWeeklyTime"
+              className={`w-full p-2 border rounded-lg ${
+                formErrors.name ? 'border-red-500' : 'border-gray-300'
+              }`}
+            />
           </div>
         )}
 
         {reminderFormData.type === 'monthly' && (
           <div className="mb-4">
             <div className="my-2">This event occurs at</div>
-            <input onChange={handleMonthlyTimeChange} value={monthlyTime} type="time" id="monthlyTime" name="monthlyTime" className={`w-full p-2 border rounded-lg ${formErrors.name ? 'border-red-500' : 'border-gray-300'
-              }`} />
+            <input
+              onChange={handleMonthlyTimeChange}
+              value={monthlyTime}
+              type="time"
+              id="monthlyTime"
+              name="monthlyTime"
+              className={`w-full p-2 border rounded-lg ${
+                formErrors.name ? 'border-red-500' : 'border-gray-300'
+              }`}
+            />
             <div className="flex items-center my-2">
               <input
-                checked={monthlyType === "monthlyType1"}
+                checked={monthlyType === 'monthlyType1'}
                 onChange={handleMonthlyTypeChange}
                 value="monthlyType1"
-                id="monthlyType1" name="monthlyType" type="radio" className="relative size-4 appearance-none rounded-full border border-gray-300 bg-white before:absolute before:inset-1 before:rounded-full before:bg-white checked:border-indigo-600 checked:bg-indigo-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:border-gray-300 disabled:bg-gray-100 disabled:before:bg-gray-400 forced-colors:appearance-auto forced-colors:before:hidden [&:not(:checked)]:before:hidden" />
-              <label htmlFor="monthlyType1" className="ml-3 text-sm/6 font-medium text-gray-900 flex items-center">
+                id="monthlyType1"
+                name="monthlyType"
+                type="radio"
+                className="relative size-4 appearance-none rounded-full border border-gray-300 bg-white before:absolute before:inset-1 before:rounded-full before:bg-white checked:border-indigo-600 checked:bg-indigo-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:border-gray-300 disabled:bg-gray-100 disabled:before:bg-gray-400 forced-colors:appearance-auto forced-colors:before:hidden [&:not(:checked)]:before:hidden"
+              />
+              <label
+                htmlFor="monthlyType1"
+                className="ml-3 text-sm/6 font-medium text-gray-900 flex items-center"
+              >
                 <span>on the</span>
-                <input onChange={handleMonthlyDayChange} value={monthlyDay} type="number" min="1" max="31" id="monthlyDay" name="monthlyDay" className={`w-14 p-2 mx-2 border rounded-lg ${formErrors.name ? 'border-red-500' : 'border-gray-300'}`} />
+                <input
+                  onChange={handleMonthlyDayChange}
+                  value={monthlyDay}
+                  type="number"
+                  min="1"
+                  max="31"
+                  id="monthlyDay"
+                  name="monthlyDay"
+                  className={`w-14 p-2 mx-2 border rounded-lg ${formErrors.name ? 'border-red-500' : 'border-gray-300'}`}
+                />
                 <span>day of every month.</span>
               </label>
             </div>
             <div className="flex items-center">
               <input
-                checked={monthlyType === "monthlyType2"}
+                checked={monthlyType === 'monthlyType2'}
                 onChange={handleMonthlyTypeChange}
                 value="monthlyType2"
-                id="monthlyType2" name="monthlyType" type="radio" className="relative size-4 appearance-none rounded-full border border-gray-300 bg-white before:absolute before:inset-1 before:rounded-full before:bg-white checked:border-indigo-600 checked:bg-indigo-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:border-gray-300 disabled:bg-gray-100 disabled:before:bg-gray-400 forced-colors:appearance-auto forced-colors:before:hidden [&:not(:checked)]:before:hidden" />
-              <label htmlFor="monthlyType2" className="ml-3 text-sm/6 font-medium text-gray-900 flex items-center">
+                id="monthlyType2"
+                name="monthlyType"
+                type="radio"
+                className="relative size-4 appearance-none rounded-full border border-gray-300 bg-white before:absolute before:inset-1 before:rounded-full before:bg-white checked:border-indigo-600 checked:bg-indigo-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:border-gray-300 disabled:bg-gray-100 disabled:before:bg-gray-400 forced-colors:appearance-auto forced-colors:before:hidden [&:not(:checked)]:before:hidden"
+              />
+              <label
+                htmlFor="monthlyType2"
+                className="ml-3 text-sm/6 font-medium text-gray-900 flex items-center"
+              >
                 <span>on the</span>
                 <select
                   id="monthlyOrderNumber"
                   name="monthlyOrderNumber"
                   value={monthlyOrderNumber}
                   onChange={handleMonthlyOrderNumberChange}
-                  className={`mx-2 p-2 border rounded-lg ${formErrors.type ? 'border-red-500' : 'border-gray-300'
-                    }`}
+                  className={`mx-2 p-2 border rounded-lg ${
+                    formErrors.type ? 'border-red-500' : 'border-gray-300'
+                  }`}
                 >
                   <option value="first">first</option>
                   <option value="second">second</option>
@@ -690,8 +792,9 @@ export default function ReminderForm({ reminder }: ReminderFormProps) {
                   name="monthlyWeekDay"
                   value={monthlyWeekDay}
                   onChange={handleMonthlyWeekDayChange}
-                  className={`mx-2 p-2 border rounded-lg ${formErrors.type ? 'border-red-500' : 'border-gray-300'
-                    }`}
+                  className={`mx-2 p-2 border rounded-lg ${
+                    formErrors.type ? 'border-red-500' : 'border-gray-300'
+                  }`}
                 >
                   <option value="monday">Monday</option>
                   <option value="tuesday">Tuesday</option>
@@ -709,55 +812,65 @@ export default function ReminderForm({ reminder }: ReminderFormProps) {
 
         {reminderFormData.type === 'yearly' && (
           <div className="mb-4">
-            <div className="my-2">This event occurs every</div>
-            <select
-              id="yearlyMonth"
-              name="yearlyMonth"
-              value={yearlyMonth}
-              onChange={handleYearlyMonthChange}
-              className={`p-2 border rounded-lg ${formErrors.type ? 'border-red-500' : 'border-gray-300'
-                }`}
-            >
-              <option value="january">January</option>
-              <option value="february">February</option>
-              <option value="march">March</option>
-              <option value="april">April</option>
-              <option value="may">May</option>
-              <option value="june">June</option>
-              <option value="july">July</option>
-              <option value="august">August</option>
-              <option value="september">September</option>
-              <option value="october">October</option>
-              <option value="november">November</option>
-              <option value="december">December</option>
-            </select>
+            <div className="my-2">This event occurs every year</div>
             <div className="flex items-center my-2">
               <input
-                checked={yearlyType === "yearlyType1"}
+                checked={yearlyType === 'yearlyType1'}
                 onChange={handleYearlyTypeChange}
                 value="yearlyType1"
-                id="yearlyType1" name="yearlyType" type="radio" className="relative size-4 appearance-none rounded-full border border-gray-300 bg-white before:absolute before:inset-1 before:rounded-full before:bg-white checked:border-indigo-600 checked:bg-indigo-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:border-gray-300 disabled:bg-gray-100 disabled:before:bg-gray-400 forced-colors:appearance-auto forced-colors:before:hidden [&:not(:checked)]:before:hidden" />
-              <label htmlFor="yearlyType1" className="ml-3 text-sm/6 font-medium text-gray-900 flex items-center">
+                id="yearlyType1"
+                name="yearlyType"
+                type="radio"
+                className="relative size-4 appearance-none rounded-full border border-gray-300 bg-white before:absolute before:inset-1 before:rounded-full before:bg-white checked:border-indigo-600 checked:bg-indigo-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:border-gray-300 disabled:bg-gray-100 disabled:before:bg-gray-400 forced-colors:appearance-auto forced-colors:before:hidden [&:not(:checked)]:before:hidden"
+              />
+              <label
+                htmlFor="yearlyType1"
+                className="ml-3 text-sm/6 font-medium text-gray-900 flex items-center"
+              >
                 <span>on the</span>
-                <input onChange={handleYearlyDayChange} value={yearlyDay} type="number" min="1" max="31" id="yearlyDay" name="yearlyDay" className={`w-[50px] p-2 mx-2 border rounded-lg ${formErrors.name ? 'border-red-500' : 'border-gray-300'}`} />
-                <span>day of the month.</span>
+                <DatePicker
+                  selected={selectedDate}
+                  onChange={(date: Date) => {
+                    if (date) {
+                      setSelectedDate(date);
+                      setYearlyMonth(
+                        date
+                          .toLocaleString('en-US', { month: 'long' })
+                          .toLowerCase()
+                      );
+                      setYearlyDay(date.getDate());
+                    }
+                  }}
+                  dateFormat="d MMMM"
+                  showMonthDropdown
+                  showYearDropdown={false}
+                  className="w-32 mx-2 p-2 border rounded-lg border-gray-300"
+                />
               </label>
             </div>
             <div className="flex items-center">
               <input
-                checked={yearlyType === "yearlyType2"}
+                checked={yearlyType === 'yearlyType2'}
                 onChange={handleYearlyTypeChange}
                 value="yearlyType2"
-                id="yearlyType2" name="yearlyType" type="radio" className="relative size-4 appearance-none rounded-full border border-gray-300 bg-white before:absolute before:inset-1 before:rounded-full before:bg-white checked:border-indigo-600 checked:bg-indigo-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:border-gray-300 disabled:bg-gray-100 disabled:before:bg-gray-400 forced-colors:appearance-auto forced-colors:before:hidden [&:not(:checked)]:before:hidden" />
-              <label htmlFor="yearlyType2" className="ml-3 text-sm/6 font-medium text-gray-900 flex items-center">
+                id="yearlyType2"
+                name="yearlyType"
+                type="radio"
+                className="relative size-4 appearance-none rounded-full border border-gray-300 bg-white before:absolute before:inset-1 before:rounded-full before:bg-white checked:border-indigo-600 checked:bg-indigo-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:border-gray-300 disabled:bg-gray-100 disabled:before:bg-gray-400 forced-colors:appearance-auto forced-colors:before:hidden [&:not(:checked)]:before:hidden"
+              />
+              <label
+                htmlFor="yearlyType2"
+                className="ml-3 text-sm/6 font-medium text-gray-900 flex items-center"
+              >
                 <span>on the</span>
                 <select
                   id="yearlyOrderNumber"
                   name="yearlyOrderNumber"
                   value={yearlyOrderNumber}
                   onChange={handleYearlyOrderNumberChange}
-                  className={`mx-2 p-2 border rounded-lg ${formErrors.type ? 'border-red-500' : 'border-gray-300'
-                    }`}
+                  className={`mx-2 p-2 border rounded-lg ${
+                    formErrors.type ? 'border-red-500' : 'border-gray-300'
+                  }`}
                 >
                   <option value="first">first</option>
                   <option value="second">second</option>
@@ -769,8 +882,9 @@ export default function ReminderForm({ reminder }: ReminderFormProps) {
                   name="yearlyWeekDay"
                   value={yearlyWeekDay}
                   onChange={handleYearlyWeekDayChange}
-                  className={`mx-2 p-2 border rounded-lg ${formErrors.type ? 'border-red-500' : 'border-gray-300'
-                    }`}
+                  className={`mx-2 p-2 border rounded-lg ${
+                    formErrors.type ? 'border-red-500' : 'border-gray-300'
+                  }`}
                 >
                   <option value="monday">Monday</option>
                   <option value="tuesday">Tuesday</option>
@@ -780,69 +894,121 @@ export default function ReminderForm({ reminder }: ReminderFormProps) {
                   <option value="saturday">Saturday</option>
                   <option value="sunday">Sunday</option>
                 </select>
-                <span>of the month</span>
+                <span>of</span>
+                <select
+                  id="yearlyMonth"
+                  name="yearlyMonth"
+                  value={yearlyMonth}
+                  onChange={handleYearlyMonthChange}
+                  className={`mx-2 p-2 border rounded-lg ${
+                    formErrors.type ? 'border-red-500' : 'border-gray-300'
+                  }`}
+                >
+                  <option value="january">January</option>
+                  <option value="february">February</option>
+                  <option value="march">March</option>
+                  <option value="april">April</option>
+                  <option value="may">May</option>
+                  <option value="june">June</option>
+                  <option value="july">July</option>
+                  <option value="august">August</option>
+                  <option value="september">September</option>
+                  <option value="october">October</option>
+                  <option value="november">November</option>
+                  <option value="december">December</option>
+                </select>
               </label>
             </div>
-            <div className="my-2">at</div>
-            <input onChange={handleYearlyTimeChange} value={yearlyTime} type="time" id="yearlyTime" name="yearlyTime" className={`w-full p-2 border rounded-lg ${formErrors.name ? 'border-red-500' : 'border-gray-300'
-              }`} />
+            <div className="my-2">
+              at
+              <input
+                onChange={handleYearlyTimeChange}
+                value={yearlyTime}
+                type="time"
+                id="yearlyTime"
+                name="yearlyTime"
+                className={`mx-2 w-32 p-2 border rounded-lg ${
+                  formErrors.name ? 'border-red-500' : 'border-gray-300'
+                }`}
+              />
+            </div>
           </div>
         )}
 
         {reminderFormData.type === 'n-yearly' && (
           <div className="mb-4">
-            <div className="my-2">This event occurs every</div>
-            <input onChange={handleNYearlyYearsChange} value={nYearlyYears} type="number" min="1" id="nYearlyYears" name="nYearlyYears" className={`w-full p-2 border rounded-lg ${formErrors.nYearlyYears ? 'border-red-500' : 'border-gray-300'
-              }`} />
-            <div className="my-2">year(s), every</div>
-            <select
-              id="nYearlyMonth"
-              name="nYearlyMonth"
-              value={nYearlyMonth}
-              onChange={handleNYearlyMonthChange}
-              className={`p-2 border rounded-lg ${formErrors.nYearlyMonth ? 'border-red-500' : 'border-gray-300'
-                }`}
-            >
-              <option value="january">January</option>
-              <option value="february">February</option>
-              <option value="march">March</option>
-              <option value="april">April</option>
-              <option value="may">May</option>
-              <option value="june">June</option>
-              <option value="july">July</option>
-              <option value="august">August</option>
-              <option value="september">September</option>
-              <option value="october">October</option>
-              <option value="november">November</option>
-              <option value="december">December</option>
-            </select>
+            {/*<div className="my-2"></div>*/}
+            This event occurs every
+            <input
+              onChange={handleNYearlyYearsChange}
+              value={nYearlyYears}
+              type="number"
+              min="1"
+              id="nYearlyYears"
+              name="nYearlyYears"
+              className={`mx-2 w-12 p-2 border rounded-lg ${
+                formErrors.nYearlyYears ? 'border-red-500' : 'border-gray-300'
+              }`}
+            />{' '}
+            year(s)
             <div className="flex items-center my-2">
               <input
-                checked={nYearlyType === "yearlyType1"}
+                checked={nYearlyType === 'yearlyType1'}
                 onChange={handleNYearlyTypeChange}
                 value="yearlyType1"
-                id="nYearlyType1" name="nYearlyType" type="radio" className="relative size-4 appearance-none rounded-full border border-gray-300 bg-white before:absolute before:inset-1 before:rounded-full before:bg-white checked:border-indigo-600 checked:bg-indigo-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:border-gray-300 disabled:bg-gray-100 disabled:before:bg-gray-400 forced-colors:appearance-auto forced-colors:before:hidden [&:not(:checked)]:before:hidden" />
-              <label htmlFor="nYearlyType1" className="ml-3 text-sm/6 font-medium text-gray-900 flex items-center">
+                id="nYearlyType1"
+                name="nYearlyType"
+                type="radio"
+                className="relative size-4 appearance-none rounded-full border border-gray-300 bg-white before:absolute before:inset-1 before:rounded-full before:bg-white checked:border-indigo-600 checked:bg-indigo-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:border-gray-300 disabled:bg-gray-100 disabled:before:bg-gray-400 forced-colors:appearance-auto forced-colors:before:hidden [&:not(:checked)]:before:hidden"
+              />
+              <label
+                htmlFor="nYearlyType1"
+                className="ml-3 text-sm/6 font-medium text-gray-900 flex items-center"
+              >
                 <span>on the</span>
-                <input onChange={handleNYearlyDayChange} value={nYearlyDay} type="number" min="1" max="31" id="nYearlyDay" name="nYearlyDay" className={`w-[50px] p-2 mx-2 border rounded-lg ${formErrors.nYearlyDay ? 'border-red-500' : 'border-gray-300'}`} />
-                <span>day of the month.</span>
+                <DatePicker
+                  selected={selectedDate}
+                  onChange={(date: Date) => {
+                    if (date) {
+                      setSelectedDate(date);
+                      setNYearlyMonth(
+                        date
+                          .toLocaleString('en-US', { month: 'long' })
+                          .toLowerCase()
+                      );
+                      setNYearlyDay(date.getDate());
+                    }
+                  }}
+                  dateFormat="d MMMM"
+                  showMonthDropdown
+                  showYearDropdown={false}
+                  className="w-32 mx-2 p-2 border rounded-lg border-gray-300"
+                />
               </label>
             </div>
             <div className="flex items-center">
               <input
-                checked={nYearlyType === "yearlyType2"}
+                checked={nYearlyType === 'yearlyType2'}
                 onChange={handleNYearlyTypeChange}
                 value="yearlyType2"
-                id="nYearlyType2" name="yearlyType" type="radio" className="relative size-4 appearance-none rounded-full border border-gray-300 bg-white before:absolute before:inset-1 before:rounded-full before:bg-white checked:border-indigo-600 checked:bg-indigo-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:border-gray-300 disabled:bg-gray-100 disabled:before:bg-gray-400 forced-colors:appearance-auto forced-colors:before:hidden [&:not(:checked)]:before:hidden" />
-              <label htmlFor="nYearlyType2" className="ml-3 text-sm/6 font-medium text-gray-900 flex items-center">
+                id="nYearlyType2"
+                name="yearlyType"
+                type="radio"
+                className="relative size-4 appearance-none rounded-full border border-gray-300 bg-white before:absolute before:inset-1 before:rounded-full before:bg-white checked:border-indigo-600 checked:bg-indigo-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:border-gray-300 disabled:bg-gray-100 disabled:before:bg-gray-400 forced-colors:appearance-auto forced-colors:before:hidden [&:not(:checked)]:before:hidden"
+              />
+              <label
+                htmlFor="nYearlyType2"
+                className="ml-3 text-sm/6 font-medium text-gray-900 flex items-center"
+              >
                 <span>on the</span>
                 <select
                   id="nYearlyOrderNumber"
                   name="nYearlyOrderNumber"
                   value={nYearlyOrderNumber}
                   onChange={handleNYearlyOrderNumberChange}
-                  className={`mx-2 p-2 border rounded-lg ${formErrors.type ? 'border-red-500' : 'border-gray-300'
-                    }`}
+                  className={`mx-2 p-2 border rounded-lg ${
+                    formErrors.type ? 'border-red-500' : 'border-gray-300'
+                  }`}
                 >
                   <option value="first">first</option>
                   <option value="second">second</option>
@@ -854,8 +1020,9 @@ export default function ReminderForm({ reminder }: ReminderFormProps) {
                   name="nYearlyWeekDay"
                   value={nYearlyWeekDay}
                   onChange={handleNYearlyWeekDayChange}
-                  className={`mx-2 p-2 border rounded-lg ${formErrors.type ? 'border-red-500' : 'border-gray-300'
-                    }`}
+                  className={`mx-2 p-2 border rounded-lg ${
+                    formErrors.type ? 'border-red-500' : 'border-gray-300'
+                  }`}
                 >
                   <option value="monday">Monday</option>
                   <option value="tuesday">Tuesday</option>
@@ -865,12 +1032,47 @@ export default function ReminderForm({ reminder }: ReminderFormProps) {
                   <option value="saturday">Saturday</option>
                   <option value="sunday">Sunday</option>
                 </select>
-                <span>of the month</span>
+                <span>of</span>
+                <select
+                  id="nYearlyMonth"
+                  name="nYearlyMonth"
+                  value={nYearlyMonth}
+                  onChange={handleNYearlyMonthChange}
+                  className={`mx-2 p-2 border rounded-lg ${
+                    formErrors.nYearlyMonth
+                      ? 'border-red-500'
+                      : 'border-gray-300'
+                  }`}
+                >
+                  <option value="january">January</option>
+                  <option value="february">February</option>
+                  <option value="march">March</option>
+                  <option value="april">April</option>
+                  <option value="may">May</option>
+                  <option value="june">June</option>
+                  <option value="july">July</option>
+                  <option value="august">August</option>
+                  <option value="september">September</option>
+                  <option value="october">October</option>
+                  <option value="november">November</option>
+                  <option value="december">December</option>
+                </select>
               </label>
             </div>
-            <div className="my-2">at</div>
-            <input onChange={handleNYearlyTimeChange} value={nYearlyTime} type="time" id="nYearlyTime" name="nYearlyTime" className={`w-full p-2 border rounded-lg ${formErrors.nYearlyTime ? 'border-red-500' : 'border-gray-300'
-              }`} />
+            <div className="my-2">
+              at
+              {/*at*/}
+              <input
+                onChange={handleNYearlyTimeChange}
+                value={nYearlyTime}
+                type="time"
+                id="nYearlyTime"
+                name="nYearlyTime"
+                className={`mx-2 w-28 p-2 border rounded-lg ${
+                  formErrors.nYearlyTime ? 'border-red-500' : 'border-gray-300'
+                }`}
+              />
+            </div>
           </div>
         )}
       </div>
@@ -885,10 +1087,16 @@ export default function ReminderForm({ reminder }: ReminderFormProps) {
             id="hasUntilDate"
             checked={hasUntilDate}
             onChange={handleHasUntilDateChange}
-          /> <label htmlFor="hasUntilDate">Run reminder until a specific date</label>
+          />{' '}
+          <label htmlFor="hasUntilDate">
+            Run reminder until a specific date
+          </label>
           {hasUntilDate && (
             <div className="mt-2">
-              <label className="block text-gray-700 font-medium mb-2" htmlFor="untilDate">
+              <label
+                className="block text-gray-700 font-medium mb-2"
+                htmlFor="untilDate"
+              >
                 Until Date
               </label>
               <input
@@ -913,20 +1121,40 @@ export default function ReminderForm({ reminder }: ReminderFormProps) {
           id="hasWarnings"
           checked={reminderFormData.hasWarnings}
           onChange={handleWarningCheckboxChange}
-        /> <label htmlFor="hasWarnings">Enable Warning Reminders</label>
+        />{' '}
+        <label htmlFor="hasWarnings">Enable Warning Reminders</label>
         {reminderFormData.hasWarnings && (
           <div className="mb-4">
             Additionally, before sending the final reminder, send me
-            <input onChange={handleChange} value={reminderFormData.warningNumber ?? undefined} id="warningNumber" name="warningNumber" type="number" className="mx-2 w-14 p-2 border rounded-lg" min="1" />
+            <input
+              onChange={handleChange}
+              value={reminderFormData.warningNumber ?? undefined}
+              id="warningNumber"
+              name="warningNumber"
+              type="number"
+              className="mx-2 w-14 p-2 border rounded-lg"
+              min="1"
+            />
             reminder(s)
-            <input onChange={handleChange} value={reminderFormData.warningIntervalNumber ?? undefined} id="warningIntervalNumber" name="warningIntervalNumber" type="number" className="mx-2 w-14 p-2 border rounded-lg" min="0" />
+            <input
+              onChange={handleChange}
+              value={reminderFormData.warningIntervalNumber ?? undefined}
+              id="warningIntervalNumber"
+              name="warningIntervalNumber"
+              type="number"
+              className="mx-2 w-14 p-2 border rounded-lg"
+              min="0"
+            />
             <select
               id="warningInterval"
               name="warningInterval"
               value={reminderFormData.warningInterval ?? undefined}
               onChange={handleChange}
-              className={`mx-2 p-2 border rounded-lg ${formErrors.warningInterval ? 'border-red-500' : 'border-gray-300'
-                }`}
+              className={`mx-2 p-2 border rounded-lg ${
+                formErrors.warningInterval
+                  ? 'border-red-500'
+                  : 'border-gray-300'
+              }`}
             >
               <option></option>
               {reminderFormData.type === 'one-time' && (
@@ -945,7 +1173,8 @@ export default function ReminderForm({ reminder }: ReminderFormProps) {
                   <option value="hour">Hour(s)</option>
                 </>
               )}
-              {(reminderFormData.type === 'weekly' || reminderFormData.type === 'n-weekly') && (
+              {(reminderFormData.type === 'weekly' ||
+                reminderFormData.type === 'n-weekly') && (
                 <>
                   <option value="minute">Minute(s)</option>
                   <option value="day">Day(s)</option>
@@ -990,7 +1219,8 @@ export default function ReminderForm({ reminder }: ReminderFormProps) {
           id="isDisabled"
           checked={!reminderFormData.isDisabled}
           onChange={handleIsActiveCheckboxChange}
-        /> <label htmlFor="isDisabled">Is active</label>
+        />{' '}
+        <label htmlFor="isDisabled">Is active</label>
       </div>
 
       {/* Submit Button */}
@@ -999,7 +1229,11 @@ export default function ReminderForm({ reminder }: ReminderFormProps) {
         className=" disabled:bg-gray-300"
         disabled={isSubmitting}
       >
-        {isSubmitting ? 'Sending...' : (isUpdate ? 'Update Reminder' : 'Create Reminder')}
+        {isSubmitting
+          ? 'Sending...'
+          : isUpdate
+            ? 'Update Reminder'
+            : 'Create Reminder'}
       </Button>
     </form>
   );
