@@ -132,7 +132,7 @@ export default function UserForm({ user }: UserFormProps) {
       {/* Email */}
       <div className="mb-4">
         <label className="block text-gray-700 font-medium mb-2" htmlFor="name">
-          Email
+          E-Mail
         </label>
         <input
           id="email"

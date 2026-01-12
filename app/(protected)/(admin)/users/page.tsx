@@ -36,18 +36,31 @@ export default function UsersPage() {
   const [email, setEmail] = useState<string>("");
   const [firstName, setFirstName] = useState<string>("");
   const [lastName, setLastName] = useState<string>("");
+  const [userName, setUserName] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [role, setRole] = useState<string>("");
-  const [errors, setErrors] = useState<{ email?: string; password?: string; role?: string }>({});
+  const [errors, setErrors] = useState<{ email?: string; password?: string; role?: string; userName?: string}>({});
+  const [open, setOpen] = useState(false);
+
+  const resetForm = () => {
+    setEmail("");
+    setFirstName("");
+    setLastName("");
+    setUserName("");
+    setPassword("");
+    setRole("");
+    setErrors({});
+  };
 
   const validateFields = () => {
-    const newErrors: { email?: string; password?: string; role?: string } = {};
+    const newErrors: { email?: string; password?: string; role?: string; userName?: string} = {};
 
+    /*
     if (!email) {
       newErrors.email = "Email is required.";
     } else if (!/^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/.test(email)) {
       newErrors.email = "Invalid email format.";
-    }
+    } */
 
     if (!password) {
       newErrors.password = "Password is required.";
@@ -57,6 +70,20 @@ export default function UsersPage() {
 
     if (!role) {
       newErrors.role = "Role is required.";
+    }
+
+    if (role === "user") {
+      if (!email) {
+        newErrors.email = "Email is required for users.";
+      } else if (!/^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/.test(email)) {
+        newErrors.email = "Invalid email format.";
+      }
+    }
+  
+    if (role === "admin") {
+      if (!userName) {
+        newErrors.userName = "Username is required for admins.";
+      }
     }
 
     setErrors(newErrors);
@@ -71,7 +98,7 @@ export default function UsersPage() {
       const response = await fetch("/api/users", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, role, password, firstName, lastName }),
+        body: JSON.stringify({ email, userName, role, password, firstName, lastName }),
       });
 
       if (!response.ok) {
@@ -83,6 +110,7 @@ export default function UsersPage() {
       setEmail("");
       setRole("");
       setPassword("");
+      setUserName("");
       mutate(url);
 
     } catch (error: any) {
@@ -98,9 +126,15 @@ export default function UsersPage() {
           <CardDescription>Manage all of your users.</CardDescription>
         </div>
         <div>
-          <Sheet>
+        <Sheet
+          open={open}
+          onOpenChange={(isOpen) => {
+            setOpen(isOpen);
+            if (!isOpen) resetForm();
+          }}
+        >
             <SheetTrigger asChild>
-              <Button >Create User</Button>
+              <Button onClick={() => setOpen(true)}>Create User</Button>
             </SheetTrigger>
             <SheetContent side="right">
               <SheetHeader>
@@ -109,46 +143,7 @@ export default function UsersPage() {
                   Enter the details of the new user below.
                 </SheetDescription>
               </SheetHeader>
-              <div className="space-y-4 mt-4">
-                <div>
-                  <label className="block text-sm font-medium mb-2">First-Name</label>
-                  <Input
-                    value={firstName}
-                    type='text'
-                    onChange={(e) => setFirstName(e.target.value)}
-                    placeholder="Enter First-Name"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-2">Last-Name</label>
-                  <Input
-                    value={lastName}
-                    type='text'
-                    onChange={(e) => setLastName(e.target.value)}
-                    placeholder="Enter Last-Name"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-2">E-Mail</label>
-                  <Input
-                    value={email}
-                    type='email'
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="Enter E-Mail"
-                  />
-                  {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-2">Password</label>
-                  <Input
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    type='password'
-                    placeholder="Enter password"
-                  />
-                  {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password}</p>}
-                </div>
-                <div>
+              <div>
                   <label className="block text-sm font-medium mb-2">Role</label>
                   <select
                     value={role}
@@ -163,13 +158,74 @@ export default function UsersPage() {
                   </select>
                   {errors.role && <p className="text-red-500 text-sm mt-1">{errors.role}</p>}
                 </div>
+              <div className="space-y-4 mt-4">
+                <div>
+                  <label className="block text-sm font-medium mb-2">First Name</label>
+                  <Input
+                    value={firstName}
+                    type='text'
+                    onChange={(e) => setFirstName(e.target.value)}
+                    placeholder="Enter First Name"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">Last Name</label>
+                  <Input
+                    value={lastName}
+                    type='text'
+                    onChange={(e) => setLastName(e.target.value)}
+                    placeholder="Enter Last Name"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">
+                    Username{" "}
+                    {role === "user" && (
+                      <span className="text-muted-foreground text-xs">(optional)</span>
+                    )}
+                  </label>
+                  <Input
+                    value={userName}
+                    type="text"
+                    onChange={(e) => setUserName(e.target.value)}
+                    placeholder="Enter Username"
+                  />
+                  {errors.userName && (<p className="text-red-500 text-sm mt-1">{errors.userName}</p>)}
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">
+                    E-Mail{" "}
+                    {role === "admin" && (
+                      <span className="text-muted-foreground text-xs">(optional)</span>
+                    )}
+                  </label>
+                  <Input
+                    value={email}
+                    type='email'
+                    autoComplete="off"
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="Enter E-Mail"
+                  />
+                  {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">Password</label>
+                  <Input
+                    value={password}
+                    type='password'
+                    autoComplete="new-password"
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Enter password"
+                  />
+                  {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password}</p>}
+                </div>
               </div>
               <SheetFooter className='mt-4'>
-                <Button onClick={handleCreateUser} className="mr-2">
-                  Submit
-                </Button>
+                <Button onClick={handleCreateUser} className="mr-2">Submit</Button>
                 <SheetClose asChild>
-                  <Button variant="secondary">Cancel</Button>
+                  <Button variant="secondary" onClick={resetForm}>
+                    Cancel
+                  </Button>
                 </SheetClose>
               </SheetFooter>
             </SheetContent>
@@ -182,7 +238,7 @@ export default function UsersPage() {
           data={data || []}
           entity="users"
           mutateKey={url}
-          fields={["id", "email", "firstName", "lastName", "role"]}
+          fields={["id", "email", "firstName", "lastName", "userName", "role"]}
           combineFieldsCallbacks={{}}
           fieldFormatter={{
             role: (role) => role.charAt(0).toUpperCase() + role.slice(1),
@@ -190,6 +246,7 @@ export default function UsersPage() {
           labelFormatter={{
             firstName: () => "First Name",
             lastName: () => "Last Name",
+            userName: () => "Username",
           }}
           filters={false}
           showEditButton={true}
