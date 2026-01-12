@@ -50,10 +50,11 @@ export const PUT = async (request: NextRequest) => {
 
         // Parse request body
         const requestBody = await request.json();
-        const { email, password, role, firstName, lastName } = requestBody;
+        const { username, email, password, role, firstName, lastName } = requestBody;
 
         const updateUserDto: UpdateUserDto = UpdateUserSchema.parse({
             id,
+            username,
             email,
             password,
             role,

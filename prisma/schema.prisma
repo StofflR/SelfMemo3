@@ -43,6 +43,7 @@ model Session {
 
 model User {
   id        String     @id @default(cuid())
+  username  String     @unique
   email     String     @unique
   password  String
   firstName String?
@@ -77,6 +78,7 @@ model Reminder {
   warningNumber         Int?    @default(0)
   warningInterval       String?
   warningIntervalNumber Int?
+  timezone              String? @default("Europe/Vienna") // IANA timezone (e.g., "America/New_York", "Europe/Vienna")
 
   user              User                @relation(fields: [userId], references: [id], onDelete: Cascade)
 

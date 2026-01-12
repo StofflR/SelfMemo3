@@ -36,13 +36,13 @@ export class NotificationService {
     console.log(`Triggering reminder: ${reminder.id}`);
 
     var smtpTransport = nodemailer.createTransport({
-        host: process.env.SMTP_HOST,
-        port: 465,
-        secure: true,
-        auth: {
-          user: process.env.SMTP_USER,
-          pass: process.env.SMTP_PASS,
-        },
+      host: process.env.SMTP_HOST,
+      port: 465,
+      secure: true,
+      auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
+      },
     });
 
 
@@ -54,8 +54,8 @@ export class NotificationService {
 
     let bodyTemplate = NotificationService.notificationTemplates[isWarning ? 'warningBody' : 'reminderBody'];
     let body = bodyTemplate.replace('{{firstName}}', user?.firstName || '')
-                           .replace('{{lastName}}', user?.lastName || '')
-                           .replace('{{description}}', reminder.description);
+      .replace('{{lastName}}', user?.lastName || '')
+      .replace('{{description}}', reminder.description);
 
     smtpTransport.sendMail(
       {
@@ -80,7 +80,7 @@ export class NotificationService {
     );
 
     // Update lastSent field
-    if(!isWarning) {
+    if (!isWarning) {
       const reminderService = ReminderService.getInstance();
       reminderService.updateReminderLastSent(reminder.id, Math.round((new Date().getTime() / 1000)));
     }
@@ -89,14 +89,22 @@ export class NotificationService {
   async checkIfReminderShouldBeNotified(date: Date, reminder: Reminder) {
     const reminderTimestamps = await ReminderService.getInstance().getReminderTimestamps(date, reminder);
     reminderTimestamps.forEach(async (reminderTimestamp) => {
+      // Convert timestamp to Date in the reminder's timezone (or default to CET for legacy reminders)
+      const timezone = reminder.timezone || 'Europe/Berlin';
+
+      // Create a date object from the reminder timestamp
       const reminderDate = new Date(reminderTimestamp.timestamp * 1000);
 
-      if(
-        date.getFullYear() === reminderDate.getFullYear() &&
-        date.getMonth() === reminderDate.getMonth() &&
-        date.getDate() === reminderDate.getDate() &&
-        date.getHours() === reminderDate.getHours() &&
-        date.getMinutes() === reminderDate.getMinutes()
+      // Convert current date to the reminder's timezone for comparison
+      const dateInTimezone = new Date(date.toLocaleString('en-US', { timeZone: timezone }));
+      const reminderDateInTimezone = new Date(reminderDate.toLocaleString('en-US', { timeZone: timezone }));
+
+      if (
+        dateInTimezone.getFullYear() === reminderDateInTimezone.getFullYear() &&
+        dateInTimezone.getMonth() === reminderDateInTimezone.getMonth() &&
+        dateInTimezone.getDate() === reminderDateInTimezone.getDate() &&
+        dateInTimezone.getHours() === reminderDateInTimezone.getHours() &&
+        dateInTimezone.getMinutes() === reminderDateInTimezone.getMinutes()
       ) {
         this.sendNotification(reminder, reminderTimestamp.isWarning);
       }

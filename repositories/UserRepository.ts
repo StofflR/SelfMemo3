@@ -58,6 +58,14 @@ export class UserRepository extends BaseRepository implements IUserRepository {
         });
     }
 
+    async getByUsername(username: string): Promise<User | null> {
+        return await this.prisma.user.findUnique({
+            where: {
+                username: username,
+            },
+        });
+    }
+
     async updatePassword(id: string, newPassword: string): Promise<User> {
         return await this.prisma.user.update({
             where: {

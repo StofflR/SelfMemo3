@@ -33,9 +33,10 @@ export const POST = async (request: NextRequest) => {
         }
 
         const requestBody = await request.json();
-        const { email, password, role, firstName, lastName } = requestBody;
+        const { username, email, password, role, firstName, lastName } = requestBody;
 
         const createUserDto: CreateUserDto = CreateUserSchema.parse({
+            username,
             email,
             password,
             role,

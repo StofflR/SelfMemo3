@@ -7,6 +7,8 @@ import { useToast } from 'hooks/useToast';
 import { useRouter } from 'next/navigation';
 import { formatTimestampAsDate, formatTimestampAsDateTime } from '@/lib/utils';
 import { Button } from '../button';
+const tzdata = require('tzdata');
+import templates from 'public/reminder-templates.json';
 
 type ReminderFormDataType = {
   id: string;
@@ -21,6 +23,7 @@ type ReminderFormDataType = {
   warningNumber: number | null;
   warningInterval: string | null;
   warningIntervalNumber: number | null;
+  timezone: string | null;
 };
 
 interface ReminderFormProps {
@@ -40,12 +43,14 @@ const defaultReminderValues: ReminderFormDataType = {
   warningNumber: 1,
   warningInterval: '',
   warningIntervalNumber: 1,
+  timezone: 'Europe/Vienna',
 };
 
 export default function ReminderForm({ reminder }: ReminderFormProps) {
   const toast = useToast();
   const router = useRouter();
   const [isUpdate, setIsUpdate] = useState(false);
+  const [timezones, setTimezones] = useState<Array<{ name: string; alternativeName: string }>>([]);
   const [reminderFormData, setReminderFormData] = useState<ReminderFormDataType>(defaultReminderValues);
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -128,7 +133,32 @@ export default function ReminderForm({ reminder }: ReminderFormProps) {
     }
   }, [reminder]);
 
-  // handle form input changes for basic fields (name, description, type)
+  // Load timezones from tzdata
+  useEffect(() => {
+    const timezoneList = Object.keys(tzdata.zones)
+      .sort()
+      .map(name => ({
+        name,
+        alternativeName: name.replace(/_/g, ' ')
+      }));
+    setTimezones(timezoneList);
+  }, []);
+
+  // Handle template selection
+  const handleTemplateChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const templateId = e.target.value;
+    if (templateId) {
+      const selectedTemplate = templates.templates.find(t => t.id === templateId);
+      if (selectedTemplate) {
+        setReminderFormData((prev) => ({
+          ...prev,
+          description: selectedTemplate.description,
+        }));
+      }
+    }
+  };
+
+  // handle form input changes for basic fields (name, description, type, timezone)
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setReminderFormData((prev) => ({
@@ -149,8 +179,8 @@ export default function ReminderForm({ reminder }: ReminderFormProps) {
       [name]: (name === 'timestamp' || name === 'warningNumber' || name === 'warningIntervalNumber') ? Number(value) : value,
     }));
 
-    if(!isUpdate) {
-      switch(value) {
+    if (!isUpdate) {
+      switch (value) {
         case 'one-time':
           defaultReminderValues.warningInterval = 'day';
           break;
@@ -448,6 +478,7 @@ export default function ReminderForm({ reminder }: ReminderFormProps) {
 
   return (
     <form onSubmit={handleSubmit}>
+
       {/* Name */}
       <div className="mb-4">
         <label className="block text-gray-700 font-medium mb-2" htmlFor="name">
@@ -469,6 +500,27 @@ export default function ReminderForm({ reminder }: ReminderFormProps) {
         )}
       </div>
 
+      {/* Template Selection */}
+      <div className="mb-4">
+        <label className="block text-gray-700 font-medium mb-2" htmlFor="template">
+          Use Template (Optional)
+        </label>
+        <select
+          id="template"
+          name="template"
+          onChange={handleTemplateChange}
+          className="w-full p-2 border rounded-lg border-gray-300"
+        >
+          <option value="">-- Select a template --</option>
+          {templates.templates.map((template) => (
+            <option key={template.id} value={template.id}>
+              {template.name}
+            </option>
+          ))}
+        </select>
+        <p className="text-gray-500 text-sm mt-1">Select a template to auto-fill the description field</p>
+      </div>
+
       {/* Description */}
       <div className="mb-4">
         <label className="block text-gray-700 font-medium mb-2" htmlFor="name">
@@ -479,13 +531,34 @@ export default function ReminderForm({ reminder }: ReminderFormProps) {
           name="description"
           onChange={handleChange}
           value={reminderFormData.description}
-          className={`w-full p-2 border rounded-lg ${
-            formErrors.name ? 'border-red-500' : 'border-gray-300'
-          }`}
+          rows={6}
+          className={`w-full p-2 border rounded-lg ${formErrors.name ? 'border-red-500' : 'border-gray-300'
+            }`}
         ></textarea>
         {formErrors.name && (
           <p className="text-red-500 text-sm mt-1">{formErrors.name}</p>
         )}
+      </div>
+
+      {/* Timezone */}
+      <div className="mb-4">
+        <label className="block text-gray-700 font-medium mb-2" htmlFor="timezone">
+          Timezone
+        </label>
+        <select
+          id="timezone"
+          name="timezone"
+          value={reminderFormData.timezone ?? 'Europe/Vienna'}
+          onChange={handleChange}
+          className={`w-full p-2 border rounded-lg ${formErrors.timezone ? 'border-red-500' : 'border-gray-300'}`}
+        >
+          {timezones.map((tz) => (
+            <option key={tz.name} value={tz.name}>
+              {tz.name} ({tz.alternativeName})
+            </option>
+          ))}
+        </select>
+        {formErrors.timezone && <p className="text-red-500 text-sm mt-1">{formErrors.timezone}</p>}
       </div>
 
       {/* Type */}
