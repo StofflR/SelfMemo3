@@ -121,21 +121,21 @@ export default function UsersPage() {
               </SheetHeader>
               <div className="space-y-4 mt-4">
                 <div>
-                  <label className="block text-sm font-medium mb-2">First-Name</label>
+                  <label className="block text-sm font-medium mb-2">First Name</label>
                   <Input
                     value={firstName}
                     type='text'
                     onChange={(e) => setFirstName(e.target.value)}
-                    placeholder="Enter First-Name"
+                    placeholder="Enter First Name"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-2">Last-Name</label>
+                  <label className="block text-sm font-medium mb-2">Last Name</label>
                   <Input
                     value={lastName}
                     type='text'
                     onChange={(e) => setLastName(e.target.value)}
-                    placeholder="Enter Last-Name"
+                    placeholder="Enter Last Name"
                   />
                 </div>
                 <div>
