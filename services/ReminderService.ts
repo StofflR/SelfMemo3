@@ -2,7 +2,7 @@ import { prisma } from "@/lib/db";
 import { CreateReminderDto, UpdateReminderDto } from "@/lib/validations/reminder";
 import { Reminder } from "@prisma/client";
 import IReminderRepository from "repositories/IReminderRepository";
-import { ReminderRepository } from "repositories/ReminderRepository";
+import { createReminderRepository } from "repositories/RepositoryFactory";
 
 type ReminderNotification = {
     timestamp: number;
@@ -14,7 +14,7 @@ export class ReminderService {
     private reminderRepository: IReminderRepository;
 
     private constructor() {
-        this.reminderRepository = new ReminderRepository();
+        this.reminderRepository = createReminderRepository();
     }
 
     public static getInstance(): ReminderService {
