@@ -830,7 +830,7 @@ export default function ReminderForm({ reminder }: ReminderFormProps) {
                 <span>on the</span>
                 <DatePicker
                   selected={selectedDate}
-                  onChange={(date: Date) => {
+                  onChange={(date: Date | null) => {
                     if (date) {
                       setSelectedDate(date);
                       setYearlyMonth(
@@ -968,7 +968,7 @@ export default function ReminderForm({ reminder }: ReminderFormProps) {
                 <span>on the</span>
                 <DatePicker
                   selected={selectedDate}
-                  onChange={(date: Date) => {
+                  onChange={(date: Date | null) => {
                     if (date) {
                       setSelectedDate(date);
                       setNYearlyMonth(
