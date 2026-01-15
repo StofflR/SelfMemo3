@@ -3,6 +3,7 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import { prisma } from "./db";
 import bcrypt from "bcryptjs";
 import { PrismaAdapter } from "@auth/prisma-adapter";
+import { UserService } from "../services/UserService";
 
 declare module "next-auth" {
   interface Session {
@@ -27,7 +28,7 @@ export const {
     signIn: "/login",
     error: '/login',
   },
-  adapter: PrismaAdapter(prisma),
+  adapter: prisma ? PrismaAdapter(prisma) : undefined,
   providers: [
     CredentialsProvider({
       credentials: {
@@ -44,11 +45,10 @@ export const {
 
         // Check if input is email or username
         const isEmail = emailOrUsername.includes('@');
-        const user = await prisma.user.findFirst({
-          where: isEmail 
-            ? { email: emailOrUsername }
-            : { username: emailOrUsername },
-        })
+        const userService = UserService.getInstance();
+        const user = isEmail
+          ? await userService.getUserByEmail(emailOrUsername)
+          : await userService.getUserByUsername(emailOrUsername);
 
         if (user) {
           const isMatch = await bcrypt.compare(password, user.password)//comparePassword(password, user.password);

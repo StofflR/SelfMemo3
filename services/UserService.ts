@@ -1,6 +1,6 @@
 import { CreateUserDto, UpdateUserDto, UpdateUserPasswordDto } from "@/lib/validations/user";
 import IUserRepository from "repositories/IUserRepository";
-import { UserRepository } from "repositories/UserRepository";
+import { createUserRepository } from "repositories/RepositoryFactory";
 import bcrypt from "bcryptjs";
 
 export class UserService {
@@ -9,7 +9,7 @@ export class UserService {
     private userRepository: IUserRepository;
 
     private constructor() {
-        this.userRepository = new UserRepository();
+        this.userRepository = createUserRepository();
     }
 
     public static getInstance(): UserService {
@@ -84,6 +84,16 @@ export class UserService {
     async getUserByEmail(email: string) {
         try {
             const user = await this.userRepository.getByEmail(email);
+
+            return user;
+        } catch {
+            return null;
+        }
+    }
+
+    async getUserByUsername(username: string) {
+        try {
+            const user = await this.userRepository.getByUsername(username);
 
             return user;
         } catch {
