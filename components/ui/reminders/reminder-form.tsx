@@ -25,7 +25,7 @@ type ReminderFormDataType = {
   warningInterval: string | null;
   warningIntervalNumber: number | null;
   timezone: string | null;
-  emailTemplate: string | null;
+  emailTemplate: string;
 };
 
 interface ReminderFormProps {

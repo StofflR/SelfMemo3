@@ -90,6 +90,11 @@ Then configure the following variables:
    ```
    This creates the database schema based on [prisma/schema.prisma](prisma/schema.prisma)
 
+   Note: If you are using local JSON file storage, use:
+   ```bash
+   npx prisma generate
+   ```
+
 3. **Start the development server:**
    ```bash
    npm run dev

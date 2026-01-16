@@ -109,6 +109,35 @@ def run_npm_build_and_start():
     """Build and start the Next.js application."""
     project_root = Path(__file__).parent.parent
 
+    print("Generating Prisma Client...")
+    print(f"   Working directory: {project_root}\n")
+
+    # Run npx prisma generate
+    try:
+        generate_proc = subprocess.Popen(
+            ["npx", "prisma", "generate"],
+            cwd=project_root,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            bufsize=1,
+        )
+
+        # Show generate output
+        for line in generate_proc.stdout:
+            print(f"[PRISMA] {line.rstrip()}")
+
+        generate_proc.wait()
+
+        if generate_proc.returncode != 0:
+            print("ERROR: Prisma generate failed!")
+            return None
+
+        print("Prisma Client generated successfully\n")
+    except Exception as e:
+        print(f"ERROR: Prisma generate error: {e}")
+        return None
+
     print("Building Next.js application...")
     print(f"   Working directory: {project_root}\n")
 
