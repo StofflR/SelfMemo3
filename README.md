@@ -26,8 +26,10 @@ cp .env.example .env
 # Install dependencies
 npm install
 
-# Run Prisma migrations
+# Run Prisma migrations for Postgre database
 npx prisma migrate dev
+# or for local JSON file storage:
+npx prisma generate
 
 # Start the application with trigger service
 python3 setup/run_local.py
@@ -89,6 +91,11 @@ Then configure the following variables:
    npx prisma migrate dev
    ```
    This creates the database schema based on [prisma/schema.prisma](prisma/schema.prisma)
+
+   Note: If you are using local JSON file storage, use:
+   ```bash
+   npx prisma generate
+   ```
 
 3. **Start the development server:**
    ```bash

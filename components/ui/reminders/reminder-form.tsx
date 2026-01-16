@@ -8,7 +8,6 @@ import { useRouter } from 'next/navigation';
 import { formatTimestampAsDate, formatTimestampAsDateTime } from '@/lib/utils';
 import { Button } from '../button';
 const tzdata = require('tzdata');
-import templates from 'public/reminder-templates.json';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 
@@ -26,6 +25,7 @@ type ReminderFormDataType = {
   warningInterval: string | null;
   warningIntervalNumber: number | null;
   timezone: string | null;
+  emailTemplate: string;
 };
 
 interface ReminderFormProps {
@@ -45,7 +45,8 @@ const defaultReminderValues: ReminderFormDataType = {
   warningNumber: 1,
   warningInterval: '',
   warningIntervalNumber: 1,
-  timezone: 'Europe/Vienna',
+  timezone: 'Etc/GMT',
+  emailTemplate: 'default',
 };
 
 export default function ReminderForm({ reminder }: ReminderFormProps) {
@@ -135,9 +136,11 @@ export default function ReminderForm({ reminder }: ReminderFormProps) {
     }
   }, [reminder]);
 
-  // Load timezones from tzdata
+  // Load timezones from tzdata (filter GMT time zones only)
   useEffect(() => {
     const timezoneList = Object.keys(tzdata.zones)
+      .filter(name => name.startsWith('Etc/GMT'))
+      .filter(name => !['Etc/GMT0', 'Etc/GMT-0', 'Etc/GMT+0'].includes(name))
       .sort()
       .map(name => ({
         name,
@@ -146,19 +149,6 @@ export default function ReminderForm({ reminder }: ReminderFormProps) {
     setTimezones(timezoneList);
   }, []);
 
-  // Handle template selection
-  const handleTemplateChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const templateId = e.target.value;
-    if (templateId) {
-      const selectedTemplate = templates.templates.find(t => t.id === templateId);
-      if (selectedTemplate) {
-        setReminderFormData((prev) => ({
-          ...prev,
-          description: selectedTemplate.description,
-        }));
-      }
-    }
-  };
 
   // handle form input changes for basic fields (name, description, type, timezone)
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
@@ -486,9 +476,8 @@ export default function ReminderForm({ reminder }: ReminderFormProps) {
           type="text"
           value={reminderFormData.name}
           onChange={handleChange}
-          className={`w-full p-2 border rounded-lg ${
-            formErrors.name ? 'border-red-500' : 'border-gray-300'
-          }`}
+          className={`w-full p-2 border rounded-lg ${formErrors.name ? 'border-red-500' : 'border-gray-300'
+            }`}
         />
         {formErrors.name && (
           <p className="text-red-500 text-sm mt-1">{formErrors.name}</p>
@@ -503,19 +492,7 @@ export default function ReminderForm({ reminder }: ReminderFormProps) {
         >
           Use Template (Optional)
         </label>
-        <select
-          id="template"
-          name="template"
-          onChange={handleTemplateChange}
-          className="w-full p-2 border rounded-lg border-gray-300"
-        >
-          <option value="">-- Select a template --</option>
-          {templates.templates.map((template) => (
-            <option key={template.id} value={template.id}>
-              {template.name}
-            </option>
-          ))}
-        </select>
+
         <p className="text-gray-500 text-sm mt-1">
           Select a template to auto-fill the description field
         </p>
@@ -532,9 +509,8 @@ export default function ReminderForm({ reminder }: ReminderFormProps) {
           onChange={handleChange}
           value={reminderFormData.description}
           rows={6}
-          className={`w-full p-2 border rounded-lg ${
-            formErrors.name ? 'border-red-500' : 'border-gray-300'
-          }`}
+          className={`w-full p-2 border rounded-lg ${formErrors.name ? 'border-red-500' : 'border-gray-300'
+            }`}
         ></textarea>
         {formErrors.name && (
           <p className="text-red-500 text-sm mt-1">{formErrors.name}</p>
@@ -552,18 +528,43 @@ export default function ReminderForm({ reminder }: ReminderFormProps) {
         <select
           id="timezone"
           name="timezone"
-          value={reminderFormData.timezone ?? 'Europe/Vienna'}
+          value={reminderFormData.timezone ?? 'Etc/GMT'}
           onChange={handleChange}
           className={`w-full p-2 border rounded-lg ${formErrors.timezone ? 'border-red-500' : 'border-gray-300'}`}
         >
           {timezones.map((tz) => (
             <option key={tz.name} value={tz.name}>
-              {tz.name} ({tz.alternativeName})
+              {tz.name.replace('Etc/', '')}
             </option>
           ))}
         </select>
         {formErrors.timezone && (
           <p className="text-red-500 text-sm mt-1">{formErrors.timezone}</p>
+        )}
+      </div>
+
+      {/* Email Template */}
+      <div className="mb-4">
+        <label
+          className="block text-gray-700 font-medium mb-2"
+          htmlFor="emailTemplate"
+        >
+          Email Template
+        </label>
+        <select
+          id="emailTemplate"
+          name="emailTemplate"
+          value={reminderFormData.emailTemplate ?? 'default'}
+          onChange={handleChange}
+          className={`w-full p-2 border rounded-lg ${formErrors.emailTemplate ? 'border-red-500' : 'border-gray-300'}`}
+        >
+          <option value="default">Default</option>
+          <option value="birthday">Birthday</option>
+          <option value="meeting">Meeting</option>
+          <option value="task">Task</option>
+        </select>
+        {formErrors.emailTemplate && (
+          <p className="text-red-500 text-sm mt-1">{formErrors.emailTemplate}</p>
         )}
       </div>
 
@@ -578,9 +579,8 @@ export default function ReminderForm({ reminder }: ReminderFormProps) {
           name="type"
           value={reminderFormData.type}
           onChange={handleTypeChange}
-          className={`w-full p-2 border rounded-lg ${
-            formErrors.type ? 'border-red-500' : 'border-gray-300'
-          }`}
+          className={`w-full p-2 border rounded-lg ${formErrors.type ? 'border-red-500' : 'border-gray-300'
+            }`}
         >
           <option></option>
           <option value="one-time">One-time</option>
@@ -604,9 +604,8 @@ export default function ReminderForm({ reminder }: ReminderFormProps) {
               type="datetime-local"
               id="oneTimeDateTimestamp"
               name="oneTimeDateTimestamp"
-              className={`w-full p-2 border rounded-lg ${
-                formErrors.name ? 'border-red-500' : 'border-gray-300'
-              }`}
+              className={`w-full p-2 border rounded-lg ${formErrors.name ? 'border-red-500' : 'border-gray-300'
+                }`}
             />
           </div>
         )}
@@ -620,9 +619,8 @@ export default function ReminderForm({ reminder }: ReminderFormProps) {
               type="time"
               id="dailyTime"
               name="dailyTime"
-              className={`w-full p-2 border rounded-lg ${
-                formErrors.name ? 'border-red-500' : 'border-gray-300'
-              }`}
+              className={`w-full p-2 border rounded-lg ${formErrors.name ? 'border-red-500' : 'border-gray-300'
+                }`}
             />
             <div className="my-2">and should be repeated on:</div>
             <div className="flex items-center space-x-4">
@@ -652,9 +650,8 @@ export default function ReminderForm({ reminder }: ReminderFormProps) {
               name="weeklyDay"
               value={weeklyDay}
               onChange={handleWeeklyDayChange}
-              className={`w-full p-2 border rounded-lg ${
-                formErrors.type ? 'border-red-500' : 'border-gray-300'
-              }`}
+              className={`w-full p-2 border rounded-lg ${formErrors.type ? 'border-red-500' : 'border-gray-300'
+                }`}
             >
               <option value="monday">Monday</option>
               <option value="tuesday">Tuesday</option>
@@ -671,9 +668,8 @@ export default function ReminderForm({ reminder }: ReminderFormProps) {
               type="time"
               id="weeklyTime"
               name="weeklyTime"
-              className={`w-full p-2 border rounded-lg ${
-                formErrors.name ? 'border-red-500' : 'border-gray-300'
-              }`}
+              className={`w-full p-2 border rounded-lg ${formErrors.name ? 'border-red-500' : 'border-gray-300'
+                }`}
             />
           </div>
         )}
@@ -688,9 +684,8 @@ export default function ReminderForm({ reminder }: ReminderFormProps) {
               min="1"
               id="nWeeklyWeeks"
               name="nWeeklyWeeks"
-              className={`w-full p-2 border rounded-lg ${
-                formErrors.name ? 'border-red-500' : 'border-gray-300'
-              }`}
+              className={`w-full p-2 border rounded-lg ${formErrors.name ? 'border-red-500' : 'border-gray-300'
+                }`}
             />
             <div className="my-2">week(s), starting</div>
             <input
@@ -699,9 +694,8 @@ export default function ReminderForm({ reminder }: ReminderFormProps) {
               type="date"
               id="nWeeklyDate"
               name="nWeeklyDate"
-              className={`w-full p-2 border rounded-lg ${
-                formErrors.name ? 'border-red-500' : 'border-gray-300'
-              }`}
+              className={`w-full p-2 border rounded-lg ${formErrors.name ? 'border-red-500' : 'border-gray-300'
+                }`}
             />
             <div className="my-2">at</div>
             <input
@@ -710,9 +704,8 @@ export default function ReminderForm({ reminder }: ReminderFormProps) {
               type="time"
               id="nWeeklyTime"
               name="nWeeklyTime"
-              className={`w-full p-2 border rounded-lg ${
-                formErrors.name ? 'border-red-500' : 'border-gray-300'
-              }`}
+              className={`w-full p-2 border rounded-lg ${formErrors.name ? 'border-red-500' : 'border-gray-300'
+                }`}
             />
           </div>
         )}
@@ -726,9 +719,8 @@ export default function ReminderForm({ reminder }: ReminderFormProps) {
               type="time"
               id="monthlyTime"
               name="monthlyTime"
-              className={`w-full p-2 border rounded-lg ${
-                formErrors.name ? 'border-red-500' : 'border-gray-300'
-              }`}
+              className={`w-full p-2 border rounded-lg ${formErrors.name ? 'border-red-500' : 'border-gray-300'
+                }`}
             />
             <div className="flex items-center my-2">
               <input
@@ -778,9 +770,8 @@ export default function ReminderForm({ reminder }: ReminderFormProps) {
                   name="monthlyOrderNumber"
                   value={monthlyOrderNumber}
                   onChange={handleMonthlyOrderNumberChange}
-                  className={`mx-2 p-2 border rounded-lg ${
-                    formErrors.type ? 'border-red-500' : 'border-gray-300'
-                  }`}
+                  className={`mx-2 p-2 border rounded-lg ${formErrors.type ? 'border-red-500' : 'border-gray-300'
+                    }`}
                 >
                   <option value="first">first</option>
                   <option value="second">second</option>
@@ -792,9 +783,8 @@ export default function ReminderForm({ reminder }: ReminderFormProps) {
                   name="monthlyWeekDay"
                   value={monthlyWeekDay}
                   onChange={handleMonthlyWeekDayChange}
-                  className={`mx-2 p-2 border rounded-lg ${
-                    formErrors.type ? 'border-red-500' : 'border-gray-300'
-                  }`}
+                  className={`mx-2 p-2 border rounded-lg ${formErrors.type ? 'border-red-500' : 'border-gray-300'
+                    }`}
                 >
                   <option value="monday">Monday</option>
                   <option value="tuesday">Tuesday</option>
@@ -868,9 +858,8 @@ export default function ReminderForm({ reminder }: ReminderFormProps) {
                   name="yearlyOrderNumber"
                   value={yearlyOrderNumber}
                   onChange={handleYearlyOrderNumberChange}
-                  className={`mx-2 p-2 border rounded-lg ${
-                    formErrors.type ? 'border-red-500' : 'border-gray-300'
-                  }`}
+                  className={`mx-2 p-2 border rounded-lg ${formErrors.type ? 'border-red-500' : 'border-gray-300'
+                    }`}
                 >
                   <option value="first">first</option>
                   <option value="second">second</option>
@@ -882,9 +871,8 @@ export default function ReminderForm({ reminder }: ReminderFormProps) {
                   name="yearlyWeekDay"
                   value={yearlyWeekDay}
                   onChange={handleYearlyWeekDayChange}
-                  className={`mx-2 p-2 border rounded-lg ${
-                    formErrors.type ? 'border-red-500' : 'border-gray-300'
-                  }`}
+                  className={`mx-2 p-2 border rounded-lg ${formErrors.type ? 'border-red-500' : 'border-gray-300'
+                    }`}
                 >
                   <option value="monday">Monday</option>
                   <option value="tuesday">Tuesday</option>
@@ -900,9 +888,8 @@ export default function ReminderForm({ reminder }: ReminderFormProps) {
                   name="yearlyMonth"
                   value={yearlyMonth}
                   onChange={handleYearlyMonthChange}
-                  className={`mx-2 p-2 border rounded-lg ${
-                    formErrors.type ? 'border-red-500' : 'border-gray-300'
-                  }`}
+                  className={`mx-2 p-2 border rounded-lg ${formErrors.type ? 'border-red-500' : 'border-gray-300'
+                    }`}
                 >
                   <option value="january">January</option>
                   <option value="february">February</option>
@@ -927,9 +914,8 @@ export default function ReminderForm({ reminder }: ReminderFormProps) {
                 type="time"
                 id="yearlyTime"
                 name="yearlyTime"
-                className={`mx-2 w-32 p-2 border rounded-lg ${
-                  formErrors.name ? 'border-red-500' : 'border-gray-300'
-                }`}
+                className={`mx-2 w-32 p-2 border rounded-lg ${formErrors.name ? 'border-red-500' : 'border-gray-300'
+                  }`}
               />
             </div>
           </div>
@@ -946,9 +932,8 @@ export default function ReminderForm({ reminder }: ReminderFormProps) {
               min="1"
               id="nYearlyYears"
               name="nYearlyYears"
-              className={`mx-2 w-12 p-2 border rounded-lg ${
-                formErrors.nYearlyYears ? 'border-red-500' : 'border-gray-300'
-              }`}
+              className={`mx-2 w-12 p-2 border rounded-lg ${formErrors.nYearlyYears ? 'border-red-500' : 'border-gray-300'
+                }`}
             />{' '}
             year(s)
             <div className="flex items-center my-2">
@@ -1006,9 +991,8 @@ export default function ReminderForm({ reminder }: ReminderFormProps) {
                   name="nYearlyOrderNumber"
                   value={nYearlyOrderNumber}
                   onChange={handleNYearlyOrderNumberChange}
-                  className={`mx-2 p-2 border rounded-lg ${
-                    formErrors.type ? 'border-red-500' : 'border-gray-300'
-                  }`}
+                  className={`mx-2 p-2 border rounded-lg ${formErrors.type ? 'border-red-500' : 'border-gray-300'
+                    }`}
                 >
                   <option value="first">first</option>
                   <option value="second">second</option>
@@ -1020,9 +1004,8 @@ export default function ReminderForm({ reminder }: ReminderFormProps) {
                   name="nYearlyWeekDay"
                   value={nYearlyWeekDay}
                   onChange={handleNYearlyWeekDayChange}
-                  className={`mx-2 p-2 border rounded-lg ${
-                    formErrors.type ? 'border-red-500' : 'border-gray-300'
-                  }`}
+                  className={`mx-2 p-2 border rounded-lg ${formErrors.type ? 'border-red-500' : 'border-gray-300'
+                    }`}
                 >
                   <option value="monday">Monday</option>
                   <option value="tuesday">Tuesday</option>
@@ -1038,11 +1021,10 @@ export default function ReminderForm({ reminder }: ReminderFormProps) {
                   name="nYearlyMonth"
                   value={nYearlyMonth}
                   onChange={handleNYearlyMonthChange}
-                  className={`mx-2 p-2 border rounded-lg ${
-                    formErrors.nYearlyMonth
-                      ? 'border-red-500'
-                      : 'border-gray-300'
-                  }`}
+                  className={`mx-2 p-2 border rounded-lg ${formErrors.nYearlyMonth
+                    ? 'border-red-500'
+                    : 'border-gray-300'
+                    }`}
                 >
                   <option value="january">January</option>
                   <option value="february">February</option>
@@ -1068,9 +1050,8 @@ export default function ReminderForm({ reminder }: ReminderFormProps) {
                 type="time"
                 id="nYearlyTime"
                 name="nYearlyTime"
-                className={`mx-2 w-28 p-2 border rounded-lg ${
-                  formErrors.nYearlyTime ? 'border-red-500' : 'border-gray-300'
-                }`}
+                className={`mx-2 w-28 p-2 border rounded-lg ${formErrors.nYearlyTime ? 'border-red-500' : 'border-gray-300'
+                  }`}
               />
             </div>
           </div>
@@ -1150,11 +1131,10 @@ export default function ReminderForm({ reminder }: ReminderFormProps) {
               name="warningInterval"
               value={reminderFormData.warningInterval ?? undefined}
               onChange={handleChange}
-              className={`mx-2 p-2 border rounded-lg ${
-                formErrors.warningInterval
-                  ? 'border-red-500'
-                  : 'border-gray-300'
-              }`}
+              className={`mx-2 p-2 border rounded-lg ${formErrors.warningInterval
+                ? 'border-red-500'
+                : 'border-gray-300'
+                }`}
             >
               <option></option>
               {reminderFormData.type === 'one-time' && (
@@ -1175,12 +1155,12 @@ export default function ReminderForm({ reminder }: ReminderFormProps) {
               )}
               {(reminderFormData.type === 'weekly' ||
                 reminderFormData.type === 'n-weekly') && (
-                <>
-                  <option value="minute">Minute(s)</option>
-                  <option value="day">Day(s)</option>
-                  <option value="hour">Hour(s)</option>
-                </>
-              )}
+                  <>
+                    <option value="minute">Minute(s)</option>
+                    <option value="day">Day(s)</option>
+                    <option value="hour">Hour(s)</option>
+                  </>
+                )}
               {reminderFormData.type === 'monthly' && (
                 <>
                   <option value="minute">Minute(s)</option>

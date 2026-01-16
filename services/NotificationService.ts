@@ -2,26 +2,28 @@ import { Reminder } from "@prisma/client";
 import nodemailer from 'nodemailer';
 import { UserService } from "./UserService";
 import { ReminderService } from "./ReminderService";
-import template from 'public/email-template.json';
+import templates from 'public/email-template.json';
 
-type Template = {
-  warningSubject: string;
-  warningBody: string;
-  reminderSubject: string;
-  reminderBody: string;
+type TemplateType = {
+  subject: string;
+  body: string;
+};
+
+type TemplateSet = {
+  reminder: TemplateType;
+  warning: TemplateType;
+};
+
+type Templates = {
+  [key: string]: TemplateSet;
 };
 
 export class NotificationService {
   private static instance: NotificationService;
-  private static notificationTemplates: Template;
+  private static notificationTemplates: Templates;
 
   private constructor() {
-    NotificationService.notificationTemplates = {
-      warningSubject: template.warning.subject,
-      warningBody: template.warning.body,
-      reminderSubject: template.reminder.subject,
-      reminderBody: template.reminder.body,
-    };
+    NotificationService.notificationTemplates = templates as Templates;
   }
 
   public static getInstance() {
@@ -44,15 +46,16 @@ export class NotificationService {
       },
     });
 
+    const templateSet = NotificationService.notificationTemplates[reminder.emailTemplate] || NotificationService.notificationTemplates["default"];
+    const template = isWarning ? templateSet.warning : templateSet.reminder;
 
-    let subjectTemplate = NotificationService.notificationTemplates[isWarning ? 'warningSubject' : 'reminderSubject'];
-    let subject = subjectTemplate.replace('{{reminderName}}', reminder.name);
+    let subject = template.subject.replace('{{reminderName}}', reminder.name);
 
     const userService = UserService.getInstance();
     const user = await userService.getUserById(reminder.userId);
 
-    let bodyTemplate = NotificationService.notificationTemplates[isWarning ? 'warningBody' : 'reminderBody'];
-    let body = bodyTemplate.replace('{{firstName}}', user?.firstName || '')
+    let body = template.body
+      .replace('{{firstName}}', user?.firstName || '')
       .replace('{{lastName}}', user?.lastName || '')
       .replace('{{description}}', reminder.description);
 

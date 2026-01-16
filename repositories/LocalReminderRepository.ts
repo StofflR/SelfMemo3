@@ -67,6 +67,7 @@ export class LocalReminderRepository implements IReminderRepository {
             warningInterval: reminder.warningInterval || null,
             warningIntervalNumber: reminder.warningIntervalNumber || null,
             timezone: reminder.timezone ?? "Europe/Vienna",
+            emailTemplate: reminder.emailTemplate ?? "default",
         };
         this.reminders.push(newReminder);
         this.saveData();
