@@ -52,6 +52,15 @@ export default function UsersPage() {
     setErrors({});
   };
 
+  const isFormValid = () => {
+    if (!role || !password) return false;
+  
+    if (role === "user" && !email) return false;
+    if (role === "admin" && !userName) return false;
+  
+    return true;
+  };
+
   const validateFields = () => {
     const newErrors: { email?: string; password?: string; role?: string; userName?: string} = {};
 
@@ -160,7 +169,10 @@ export default function UsersPage() {
                 </div>
               <div className="space-y-4 mt-4">
                 <div>
-                  <label className="block text-sm font-medium mb-2">First Name</label>
+                  <label className="block text-sm font-medium mb-2">
+                    First Name {" "}
+                    {(<span className="text-muted-foreground text-xs">(optional)</span>)}
+                  </label>
                   <Input
                     value={firstName}
                     type='text'
@@ -169,7 +181,10 @@ export default function UsersPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-2">Last Name</label>
+                  <label className="block text-sm font-medium mb-2">
+                      Last Name {" "}
+                      {(<span className="text-muted-foreground text-xs">(optional)</span>)}
+                    </label>
                   <Input
                     value={lastName}
                     type='text'
@@ -221,7 +236,13 @@ export default function UsersPage() {
                 </div>
               </div>
               <SheetFooter className='mt-4'>
-                <Button onClick={handleCreateUser} className="mr-2">Submit</Button>
+                <Button 
+                  onClick={handleCreateUser} 
+                  className="mr-2"
+                  disabled={!isFormValid()}
+                >
+                  Submit
+                </Button>
                 <SheetClose asChild>
                   <Button variant="secondary" onClick={resetForm}>
                     Cancel
