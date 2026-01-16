@@ -45,7 +45,7 @@ const defaultReminderValues: ReminderFormDataType = {
   warningNumber: 1,
   warningInterval: '',
   warningIntervalNumber: 1,
-  timezone: 'Europe/Vienna',
+  timezone: 'Etc/GMT',
 };
 
 export default function ReminderForm({ reminder }: ReminderFormProps) {
@@ -135,9 +135,11 @@ export default function ReminderForm({ reminder }: ReminderFormProps) {
     }
   }, [reminder]);
 
-  // Load timezones from tzdata
+  // Load timezones from tzdata (filter GMT time zones only)
   useEffect(() => {
     const timezoneList = Object.keys(tzdata.zones)
+      .filter(name => name.startsWith('Etc/GMT'))
+      .filter(name => !['Etc/GMT0', 'Etc/GMT-0', 'Etc/GMT+0'].includes(name))
       .sort()
       .map(name => ({
         name,
@@ -552,13 +554,13 @@ export default function ReminderForm({ reminder }: ReminderFormProps) {
         <select
           id="timezone"
           name="timezone"
-          value={reminderFormData.timezone ?? 'Europe/Vienna'}
+          value={reminderFormData.timezone ?? 'Etc/GMT'}
           onChange={handleChange}
           className={`w-full p-2 border rounded-lg ${formErrors.timezone ? 'border-red-500' : 'border-gray-300'}`}
         >
           {timezones.map((tz) => (
             <option key={tz.name} value={tz.name}>
-              {tz.name} ({tz.alternativeName})
+              {tz.name.replace('Etc/', '')}
             </option>
           ))}
         </select>
