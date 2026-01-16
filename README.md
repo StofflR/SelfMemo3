@@ -10,78 +10,113 @@ It is the enhancement of the previous project: https://github.com/selfmemo2/Self
 
 ## Getting Started
 
-### Prerequisites
-- [GitHub](https://github.com/) Account
-- [Vercel](https://vercel.com/) Account
-- SMTP Account
-- [cron-job.org](https://cron-job.org/) Account
-- [Neon Serverless Postgres](https://neon.tech/) Account + DB
+### Quick Start with run_local.py (Recommended for Local Development)
 
-### Local Environment
-- Clone/Fork this repository
-- ```cd``` into the application folder
-- Run ```npm install```
+The easiest way to run SelfMemo3 locally is using the automated [setup/run_local.py](setup/run_local.py) script:
 
-Create a ```.env``` file in the root directory of your repository and set the following env variables:\
-DATABASE_URL=\
-You can use any Postgres database as described in [https://www.prisma.io/docs/orm/overview/databases/postgresql#connection-url](https://www.prisma.io/docs/orm/overview/databases/postgresql#connection-url).
+```bash
+# Clone the repository
+git clone <repository-url>
+cd SelfMemo3
 
-NEXTAUTH_URL=\
-The URL, where your application will run. Locally, this should be set to e.g. ```http://localhost:3000```.
+# Create your .env file from the example
+cp .env.example .env
+# Edit .env with your configuration (see Environment Variables section below)
 
-AUTH_SECRET=\
-Create a secret on [https://generate-secret.vercel.app/32](https://generate-secret.vercel.app/32)
+# Install dependencies
+npm install
 
-Connect your SMTP-Account. Note that the application is configured to send **secure** emails via port **465**:\
-SMTP_USER=\
-SMTP_PASS=\
-SMTP_MAIL=\
-SMTP_HOST=\
+# Run Prisma migrations
+npx prisma migrate dev
 
-For your initial admin-account, set the following variables:\
-ADMIN_EMAIL=\
-ADMIN_NAME=\
-ADMIN_PASSWORD=\
+# Start the application with trigger service
+python3 setup/run_local.py
+```
 
-- Run ```npx prisma migrate dev``` to migrate the database schema
-- ```npm run dev``` to start your application
-- Hit once ```GET http://localhost:3000/api/seed``` in order to create your admin account
+The `run_local.py` script will:
+- Check prerequisites (Node.js, npm, Python dependencies)
+- Build the Next.js application
+- Start the application server
+- Start the trigger service (replaces cron-job.org for local development)
+- Automatically seed the database with the admin account
 
-Your application should be up and running on localhost:3000 and you should be able to login.
+### Manual Local Setup
 
-### Deploy the application
+#### Prerequisites
+- Node.js and npm installed
+- PostgreSQL database (or leave DATABASE_URL empty for JSON file storage)
+- SMTP account for sending emails
 
-Steps:
-- Fork this repository on GitHub
-- Connect your Vercel to your GitHub account
-  - Create a new project in your Vercel account
-  - Select "Import Git Repository" (you may need to install the GitHub application)
-  - Select this repository fork and click on "Import"
-  - Set the following Environment Variables in Vercel:
-    - DATABASE_URL -> Retrieve your connection string from Neon.
-    - NEXTAUTH_URL -> The URL, where your application will run.
-    - AUTH_SECRET -> generate on [https://generate-secret.vercel.app/32](https://generate-secret.vercel.app/32)
-    - SMTP_USER
-    - SMTP_PASS
-    - SMTP_MAIL
-    - SMTP_HOST
-    - ADMIN_EMAIL
-    - ADMIN_NAME
-    - ADMIN_PASSWORD
-  - Click "Deploy"
-  - In your Vercel-Project Settings -> General -> Build & Development Settings, set the "Build Command" to ```prisma generate && prisma migrate deploy && next build```
-  - You may have to re-deploy after changing the build command (Vercel Deployments -> 3 dots -> Redeploy)
+#### Environment Variables
 
-- Send a request to create admin user: GET https://your-vercel-url.com/api/seed\
-You should see "Admin user created".
-- Setup cronjob.org and point a cronjob running every minute to:
-https://your-vercel-url.com/api/reminders/trigger
-- You can now create reminders and users in the application.
+Copy the [.env.example](.env.example) file to create your own `.env` file:
 
-References:\
-[https://vercel.com/docs/deployments/git/vercel-for-github](https://vercel.com/docs/deployments/git/vercel-for-github)\
-[https://vercel.com/docs/deployments/git#deploying-a-git-repository](https://vercel.com/docs/deployments/git#deploying-a-git-repository)\
-[https://www.prisma.io/docs/orm/overview/databases/supabase](https://www.prisma.io/docs/orm/overview/databases/supabase)\
+```bash
+cp .env.example .env
+```
+
+Then configure the following variables:
+
+**Database:**
+- `DATABASE_URL`: PostgreSQL connection string (leave empty for local JSON file storage)
+  - Example: `postgresql://user:password@localhost:5432/selfmemo`
+  - See [Prisma PostgreSQL docs](https://www.prisma.io/docs/orm/overview/databases/postgresql#connection-url)
+
+**Authentication:**
+- `NEXTAUTH_URL`: The URL where your application runs (e.g., `http://localhost:3000`)
+- `AUTH_SECRET`: Generate a secret at [https://generate-secret.vercel.app/32](https://generate-secret.vercel.app/32)
+
+**SMTP Configuration** (for sending reminder emails):
+- `SMTP_USER`: Your SMTP username
+- `SMTP_PASS`: Your SMTP password
+- `SMTP_PORT`: SMTP port (default: 465 for secure connections)
+- `SMTP_MAIL`: Email address to send from
+- `SMTP_HOST`: SMTP server hostname
+
+**Admin Account:**
+- `ADMIN_EMAIL`: Email for the initial admin account
+- `ADMIN_PASSWORD`: Password for the admin account
+
+#### Installation Steps
+
+1. **Install npm dependencies:**
+   ```bash
+   npm install
+   ```
+
+2. **Set up the database:**
+   ```bash
+   npx prisma migrate dev
+   ```
+   This creates the database schema based on [prisma/schema.prisma](prisma/schema.prisma)
+
+3. **Start the development server:**
+   ```bash
+   npm run dev
+   ```
+
+4. **Seed the database:**
+   
+   Once the application is running, create the admin account by calling:
+   ```bash
+   curl http://localhost:3000/api/seed
+   ```
+   You should see "Admin user created"
+
+5. **Set up periodic reminder checks:**
+   
+   For local development, you can either:
+   - Use `python3 setup/run_local.py` (recommended - includes automatic trigger service)
+   - Manually trigger reminders: `curl http://localhost:3000/api/reminders/trigger`
+   - Set up a local cron job to call the trigger endpoint every minute
+
+Your application should now be running on [http://localhost:3000](http://localhost:3000) and you can login with your admin credentials.
+
+### Deployment
+
+For deployment on Linux servers, see [SETUP.md](SETUP.md) for using the automated setup script.
+
+
 
 ## License
 The MIT License (MIT)

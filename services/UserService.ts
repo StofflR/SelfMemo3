@@ -141,7 +141,7 @@ export class UserService {
     async createDefaultAdminUser() {
 
         if (!process.env.ADMIN_EMAIL || !process.env.ADMIN_PASSWORD) {
-            throw new Error('ADMIN_EMAIL, ADMIN_NAME, and ADMIN_PASSWORD must be set in the environment variables');
+            throw new Error('ADMIN_EMAIL and ADMIN_PASSWORD must be set in the environment variables');
         }
 
         const adminUser: CreateUserDto = {
