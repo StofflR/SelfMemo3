@@ -70,6 +70,10 @@ function DesktopNav({ isAdmin }: { isAdmin: boolean }) {
           </NavItem> : null}
 
           <NavItem href="/reminders" label="Reminders">
+            <Bell className="h-5 w-5" />
+          </NavItem>
+
+          <NavItem href="/calendar" label="Calendar">
             <Calendar className="h-5 w-5" />
           </NavItem>
         </div>
@@ -120,9 +124,22 @@ function MobileNav({ isAdmin }: { isAdmin: boolean }) {
             href="/reminders"
             className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
           >
-            <Calendar className="h-5 w-5" />
+            <Bell className="h-5 w-5" />
             Reminders
           </Link>
+          
+
+
+          <Link
+            href="/calendar"
+            className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
+          >
+            <Calendar className="h-5 w-5" />
+              Calendar
+          </Link>
+          
+
+
 
           <Link
             href="/settings"
