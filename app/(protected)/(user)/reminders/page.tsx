@@ -17,7 +17,6 @@ import DynamicList from '@/components/ui/DynamicList';
 import { Reminder } from '@prisma/client';
 import { useApiSwr } from 'hooks/useApiSwr';
 import { useToast } from 'hooks/useToast';
-import { useRouter } from 'next/navigation';
 import { ExportImportButtons } from '@/components/ui/reminders/ExportImportButtons';
 
 export default function RemindersPage() {
@@ -76,44 +75,50 @@ export default function RemindersPage() {
     };
 
     return (
-        <Box p="xl" maw={1200}>
-            <Group justify="space-between" mb="lg" align="flex-end">
-                <div>
-                    <Title order={2}>Reminders</Title>
-                    <Text c="dimmed">Manage all of your reminders.</Text>
-                </div>
-                <Button onClick={handleCreateReminder}>
-                    Create Reminder
-                </Button>
-            </Group>
+      <Box p="xl" maw={1200}>
+        <Group justify="space-between" mb="lg" align="flex-end">
+          <div>
+            <Title order={2}>Reminders</Title>
+            <Text c="dimmed">Manage all of your reminders.</Text>
+          </div>
+          <div className="flex gap-2">
+            <Button onClick={() => handleCreateReminder()}>
+              Create Reminder
+            </Button>
+            <ExportImportButtons />
+          </div>
+        </Group>
 
-            <Paper withBorder shadow="sm" radius="md" p="md">
-                <DynamicList
-                    data={data || []}
-                    entity="reminders"
-                    mutateKey={url}
-                    fields={["name", "type", "isDisabled"]}
-
-                    fieldFormatter={{
-                        isDisabled: (value) => value
-                            ? <Badge color="gray" variant="light">Disabled</Badge>
-                            : <Badge color="green" variant="light">Active</Badge>,
-                        type: (value) => value.charAt(0).toUpperCase() + value.slice(1)
-                    }}
-
-                    labelFormatter={{
-                        isDisabled: () => "Status"
-                    }}
-                    filters={false}
-
-                    showEditButton={true}
-                    onEdit={handleEditReminder}
-                    entityButtonText="Edit"
-
-                    showDeleteButton={true}
-                    onDelete={handleDeleteReminder}
-                />
-            </Paper>
-        </Box>
+        <Paper withBorder shadow="sm" radius="md" p="md">
+          <DynamicList
+            data={data || []}
+            entity="reminders"
+            mutateKey={url}
+            fields={['name', 'type', 'isDisabled']}
+            fieldFormatter={{
+              isDisabled: (value) =>
+                value ? (
+                  <Badge color="gray" variant="light">
+                    Disabled
+                  </Badge>
+                ) : (
+                  <Badge color="green" variant="light">
+                    Active
+                  </Badge>
+                ),
+              type: (value) => value.charAt(0).toUpperCase() + value.slice(1)
+            }}
+            labelFormatter={{
+              isDisabled: () => 'Status'
+            }}
+            filters={false}
+            showEditButton={true}
+            onEdit={handleEditReminder}
+            entityButtonText="Edit"
+            showDeleteButton={true}
+            onDelete={handleDeleteReminder}
+          />
+        </Paper>
+      </Box>
     );
 }
