@@ -14,7 +14,7 @@ export default function RemindersCreatePage() {
     return (
         <Box p="xl" maw={1200}>
             <Title order={2} mb="lg">Create New Reminder</Title>
-            <Paper withBorder shadow="sm" radius="md" p="xl" bg="white">
+            <Paper withBorder shadow="sm" radius="md" p="xl">
                 <ReminderForm 
                     onSuccess={handleRedirect}
                     onClose={handleRedirect}

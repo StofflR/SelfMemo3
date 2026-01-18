@@ -21,7 +21,7 @@ export default function EditReminderForm({ reminder }: EditReminderFormProps) {
         <Box p="xl" maw={1200}>
             <Title order={2} mb="lg">Edit Reminder</Title>
             
-            <Paper withBorder shadow="sm" radius="md" p="md" bg="white">
+            <Paper withBorder shadow="sm" radius="md" p="md">
                 <ReminderForm 
                     reminder={reminder} 
                     onSuccess={handleRedirect}

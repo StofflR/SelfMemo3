@@ -27,6 +27,8 @@ import {
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { User as UserProfile } from '@/components/ui/user'; 
+import { LogoHorizontal } from '@/components/ui/Logo';
+import { ColorSchemeSwitch } from '@/components/ui/ColorSchemeSwitch';
 
 interface DashboardShellProps {
   children: React.ReactNode;
@@ -114,18 +116,16 @@ export default function DashboardShell({ children, isAdmin, user }: DashboardShe
               hiddenFrom="sm" 
               size="sm" 
             />
-            <Link href="/" style={{ textDecoration: 'none', color: 'inherit' }}>
-                <Group gap="xs" wrap="nowrap">
-                    <ThemeIcon variant="filled" color="blue" radius="xl" size="lg">
-                        <Bell style={{ width: rem(20), height: rem(20) }} />
-                    </ThemeIcon>
-                    <Text fw={700} visibleFrom={desktopOpened ? 'xs' : 'sm'}>
-                      {desktopOpened ? 'SelfMemo' : ''}
-                    </Text>
-                </Group>
+            
+            <Link href="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <LogoHorizontal size={35} />
             </Link>
+
           </Group>
-          <UserProfile />
+          <Group gap="lg">
+            <ColorSchemeSwitch />
+            <UserProfile />
+          </Group>
         </Group>
       </AppShell.Header>
 
@@ -136,38 +136,66 @@ export default function DashboardShell({ children, isAdmin, user }: DashboardShe
         </AppShell.Section>
 
         <AppShell.Section>
-           {renderNavLinks(bottomItems)}
-           <div style={{ margin: '10px 0', borderTop: `1px solid ${theme.colors.gray[3]}` }} />
+          {renderNavLinks(bottomItems)}
+          
+          <div style={{ 
+            margin: '10px 0', 
+            borderTop: `1px solid var(--mantine-color-default-border)` 
+          }} />
 
-           <UnstyledButton 
-             onClick={toggleDesktop}
-             style={{
-               width: '100%',
-               padding: '10px',
-               borderRadius: theme.radius.sm,
-               color: theme.colors.gray[7],
-               display: 'flex',
-               justifyContent: desktopOpened ? 'flex-start' : 'center',
-               alignItems: 'center',
-             }}
-             onMouseEnter={(e) => e.currentTarget.style.backgroundColor = theme.colors.gray[1]}
-             onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-           >
-             {desktopOpened ? (
-               <>
-                 <ChevronsLeft size="1.2rem" />
-                 <Text size="sm" ml="md">Collapse</Text>
-               </>
-             ) : (
-               <ChevronsRight size="1.2rem" />
-             )}
-           </UnstyledButton>
+          <Tooltip 
+            label={desktopOpened ? "" : "Expand"} 
+            position="right" 
+            disabled={desktopOpened}
+          >
+            <UnstyledButton 
+              onClick={toggleDesktop}
+              style={{
+                width: '100%',
+                padding: 'var(--mantine-spacing-sm)',
+                borderRadius: 'var(--mantine-radius-sm)',
+                color: 'var(--mantine-color-text)',
+                display: 'flex',
+                justifyContent: desktopOpened ? 'flex-start' : 'center',
+                alignItems: 'center',
+                transition: 'background-color 100ms ease',
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--mantine-color-default-hover)'}
+              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+            >
+              {desktopOpened ? (
+                <>
+                  <ChevronsLeft size="1.2rem" strokeWidth={1.5} />
+                  <Text size="sm" ml="md">Collapse</Text>
+                </>
+              ) : (
+                <ChevronsRight size="1.2rem" strokeWidth={1.5} />
+              )}
+            </UnstyledButton>
+          </Tooltip>
         </AppShell.Section>
 
       </AppShell.Navbar>
 
-      <AppShell.Main bg="gray.0">
-        {children}
+      <AppShell.Main 
+          bg="gray.0"
+          style={{ 
+            display: 'block',    
+            width: '100%',       
+            minHeight: '100vh',  
+            paddingTop: 'var(--app-shell-header-height)', 
+            alignItems: 'flex-start',
+            justifyContent: 'flex-start'
+          }}
+      >
+        <div style={{ 
+            width: '100%', 
+            maxWidth: '100%', 
+            display: 'block',
+            textAlign: 'left' 
+        }}>
+            {children}
+        </div>
       </AppShell.Main>
     </AppShell>
   );

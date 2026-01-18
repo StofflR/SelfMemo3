@@ -444,13 +444,16 @@ export default function ReminderForm({ reminder, onClose, onSuccess }: ReminderF
                 <TimeInput label="Time" value={dailyTime} onChange={(e) => setDailyTime(e.currentTarget.value)} leftSection={<IconClock size={16}/>} />
                 <Text size="sm" fw={500}>Repeat on:</Text>
                 <Group gap="xs">
-                    {Object.keys(days).map((day) => (
-                        <Checkbox 
-                            key={day}
-                            label={day.substring(0,3).toUpperCase()}
-                            checked={(days as any)[day]}
-                            onChange={(e) => setDays(p => ({...p, [day]: e.currentTarget.checked}))}
-                        />
+                  {Object.keys(days).map((day) => (
+                    <Checkbox 
+                        key={day}
+                        label={day.substring(0,3).toUpperCase()}
+                        checked={(days as any)[day]}
+                        onChange={(e) => {
+                            const isChecked = e.currentTarget.checked;
+                            setDays(p => ({ ...p, [day]: isChecked }));
+                        }}
+                    />
                     ))}
                 </Group>
             </Stack>

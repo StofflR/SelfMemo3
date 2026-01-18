@@ -18,6 +18,7 @@ import {
 import { notifications } from '@mantine/notifications';
 import { IconInfoCircle } from '@tabler/icons-react'; 
 import { UpdateUserDto, UpdateUserPasswordDto } from '@/lib/validations/user';
+
 type INFUpdateUserPasswordDto = Omit<UpdateUserPasswordDto, 'id'>;
 
 interface INFUserSettingsFormProps {
@@ -163,14 +164,14 @@ const UserSettingsForm: FC<INFUserSettingsFormProps> = ({ user }) => {
                                         name="firstName"
                                         value={updateUser.firstName || ''}
                                         onChange={handleChange}
-                                        autoComplete="new-first-name"
+                                        autoComplete="off"
                                     />
                                     <TextInput
                                         label="Last Name"
                                         name="lastName"
                                         value={updateUser.lastName || ''}
                                         onChange={handleChange}
-                                        autoComplete="new-last-name"
+                                        autoComplete="off"
                                     />
                                 </Group>
                                 
@@ -179,7 +180,7 @@ const UserSettingsForm: FC<INFUserSettingsFormProps> = ({ user }) => {
                                     name="username"
                                     value={updateUser.username || ''}
                                     onChange={handleChange}
-                                    autoComplete="username"
+                                    autoComplete="off"
                                 />
 
                                 <TextInput
@@ -188,7 +189,7 @@ const UserSettingsForm: FC<INFUserSettingsFormProps> = ({ user }) => {
                                     type="email"
                                     value={updateUser.email || ''}
                                     onChange={handleChange}
-                                    autoComplete="email"
+                                    autoComplete="off"
                                 />
 
                                 <Group justify="flex-end" mt="xs">
@@ -222,7 +223,7 @@ const UserSettingsForm: FC<INFUserSettingsFormProps> = ({ user }) => {
                                     name="currentPassword"
                                     value={updateUserPassword.currentPassword}
                                     onChange={handleChangePassword}
-                                    autoComplete="current-password"
+                                    autoComplete="off" 
                                 />
 
                                 <Group grow>
@@ -231,14 +232,14 @@ const UserSettingsForm: FC<INFUserSettingsFormProps> = ({ user }) => {
                                         name="newPassword"
                                         value={updateUserPassword.newPassword}
                                         onChange={handleChangePassword}
-                                        autoComplete="new-password"
+                                        autoComplete="off"
                                     />
                                     <PasswordInput
                                         label="Confirm New Password"
                                         name="secondPassword"
                                         value={secondUserPassword}
                                         onChange={handleChangePassword}
-                                        autoComplete="new-password"
+                                        autoComplete="off"
                                     />
                                 </Group>
 

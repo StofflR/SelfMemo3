@@ -1,29 +1,21 @@
 "use client";
 
 import React from 'react';
-import { Table, Button, Text } from '@mantine/core';
+import { Table, Button, Text, Group, ActionIcon } from '@mantine/core';
+import { Trash } from 'lucide-react'; 
 import Link from 'next/link';
 
 interface DynamicListProps<T extends { id: string }> {
   data: T[];
-  
   fields: string[];
-
   entity?: string;
-
   showEditButton?: boolean;
+  showDeleteButton?: boolean; 
   entityButtonText?: string;
-
-
   onEdit?: (item: T) => void;
-
+  onDelete?: (item: T) => void; 
   fieldFormatter?: Record<string, (val: any) => React.ReactNode>;
-
   labelFormatter?: Record<string, () => string>;
-
-  mutateKey?: string;
-  filters?: boolean;
-  combineFieldsCallbacks?: Record<string, any>;
 }
 
 export default function DynamicList<T extends { id: string }>({
@@ -31,19 +23,19 @@ export default function DynamicList<T extends { id: string }>({
   fields,
   entity,
   showEditButton = false,
+  showDeleteButton = false, 
   entityButtonText = "Edit",
   onEdit,
+  onDelete, 
   fieldFormatter,
   labelFormatter,
 }: DynamicListProps<T>) {
 
   if (!data || data.length === 0) {
-    return (
-      <Text c="dimmed" fs="italic" size="sm" py="md">
-        No entries found.
-      </Text>
-    );
+    return <Text c="dimmed" fs="italic" size="sm" py="md">No entries found.</Text>;
   }
+
+  const showActions = showEditButton || showDeleteButton;
 
   return (
     <Table striped highlightOnHover verticalSpacing="xs">
@@ -56,7 +48,7 @@ export default function DynamicList<T extends { id: string }>({
                 : field.charAt(0).toUpperCase() + field.slice(1)}
             </Table.Th>
           ))}
-          {showEditButton && <Table.Th style={{ width: '100px' }}>Actions</Table.Th>}
+          {showActions && <Table.Th style={{ width: '150px' }}>Actions</Table.Th>}
         </Table.Tr>
       </Table.Thead>
 
@@ -71,26 +63,27 @@ export default function DynamicList<T extends { id: string }>({
               </Table.Td>
             ))}
 
-            {showEditButton && (
+            {showActions && (
               <Table.Td>
-                {onEdit ? (
-                  <Button 
-                    variant="transparent" 
-                    size="xs" 
-                    onClick={() => onEdit(item)}
-                  >
-                    {entityButtonText}
-                  </Button>
-                ) : (
-                  <Button 
-                    component={Link}
-                    href={entity ? `/${entity}/${item.id}/edit` : '#'}
-                    variant="transparent" 
-                    size="xs"
-                  >
-                    {entityButtonText}
-                  </Button>
-                )}
+                <Group gap="xs">
+                  {showEditButton && (
+                    <Button variant="transparent" size="xs" onClick={() => onEdit?.(item)}>
+                      {entityButtonText}
+                    </Button>
+                  )}
+
+                  {showDeleteButton && (
+                    <ActionIcon 
+                      variant="subtle" 
+                      color="red" 
+                      onClick={() => {
+                        onDelete?.(item);
+                      }}
+                    >
+                      <Trash size={16} strokeWidth={1.5} />
+                    </ActionIcon>
+                  )}
+                </Group>
               </Table.Td>
             )}
           </Table.Tr>

@@ -11,6 +11,7 @@ import {
 } from "@mantine/core"; 
 import { useState } from 'react';
 import { signIn } from 'next-auth/react';
+import { LogoFull } from '@/components/ui/Logo';
 
 export default function LoginPage() {
   const [emailOrUsername, setEmailOrUsername] = useState('');
@@ -28,7 +29,7 @@ export default function LoginPage() {
 
     if (result?.error) {
       console.error('Sign-in error:', result.error);
-      setError(result.error);
+      setError("Invalid username, email or password.");
     } else {
       window.location.href = '/';
     }
@@ -36,44 +37,52 @@ export default function LoginPage() {
 
   return (
     <Center h="100vh">
-      <Card shadow="md" padding="lg" radius="md" w={360}>
-        <Stack gap="md">
-          <div>
-            <Text size="xl" fw={600}>
-              Login
-            </Text>
-            <Text size="sm" c="dimmed">
-              Please sign in with your username or email and password.
-            </Text>
-          </div>
+      <Stack align="center" gap="lg">
+        
+        <LogoFull size={120} />
 
-          {error && (
-            <Alert color="red" variant="light">
-              {error}
-            </Alert>
-          )}
+        <Card shadow="md" padding="xl" radius="md" w={360} withBorder>
+          <Stack gap="md">
+            <div>
+              <Text size="sm" c="dimmed" ta="center" fw={500}>
+                Sign in to your account.
+              </Text>
+            </div>
 
-          <form onSubmit={handleSignIn}>
-            <Stack gap="md">
-              <TextInput
-                label="Username or Email"
-                value={emailOrUsername}
-                onChange={(e) => setEmailOrUsername(e.currentTarget.value)}
-                required
-              />
+            {error && (
+              <Alert color="red" variant="light">
+                {error}
+              </Alert>
+            )}
 
-              <PasswordInput
-                label="Password"
-                value={password}
-                onChange={(e) => setPassword(e.currentTarget.value)}
-                required
-              />
+            <form onSubmit={handleSignIn}>
+              <Stack gap="md">
+                <TextInput
+                  label="Username or Email"
+                  placeholder="Your username or email"
+                  value={emailOrUsername}
+                  onChange={(e) => setEmailOrUsername(e.currentTarget.value)}
+                  required
+                  autoComplete="username"
+                />
 
-              <Button type="submit" fullWidth> Sign In </Button>
-            </Stack>
-          </form>
-        </Stack>
-      </Card>
+                <PasswordInput
+                  label="Password"
+                  placeholder="Your password"
+                  value={password}
+                  onChange={(e) => setPassword(e.currentTarget.value)}
+                  required
+                  autoComplete="current-password"
+                />
+
+                <Button type="submit" fullWidth mt="md"> 
+                  Sign In 
+                </Button>
+              </Stack>
+            </form>
+          </Stack>
+        </Card>
+      </Stack>
     </Center>
   );
 }

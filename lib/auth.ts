@@ -5,7 +5,7 @@ import { authConfig } from "./auth.config";
 import { UserService } from "../services/UserService"; 
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
-  ...authConfig, 
+  ...authConfig,
   providers: [
     Credentials({
       credentials: {
@@ -30,4 +30,20 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       },
     }),
   ],
+  callbacks: {
+    async jwt({ token, user }) {
+      if (user) {
+        token.role = (user as any).role;
+        token.id = user.id as string;
+      }
+      return token;
+    },
+    async session({ session, token }) {
+      if (token && session.user) {
+        session.user.role = (token.role as string) ?? "user"; 
+        session.user.id = (token.id as string) ?? "";
+      }
+      return session;
+    }
+  }
 });
