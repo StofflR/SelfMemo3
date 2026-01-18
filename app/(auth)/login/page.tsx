@@ -1,12 +1,14 @@
 "use client";
-import { Button } from '@/components/ui/button';
 import {
   Card,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle
-} from '@/components/ui/card';
+  Text,
+  TextInput,
+  PasswordInput,
+  Button,
+  Stack,
+  Alert,
+  Center,
+} from "@mantine/core"; 
 import { useState } from 'react';
 import { signIn } from 'next-auth/react';
 
@@ -33,49 +35,45 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex justify-center items-start md:items-center p-8">
-      <Card className="w-full max-w-sm">
-        <CardHeader>
-          <CardTitle className="text-2xl">Login</CardTitle>
-          <CardDescription>
-            Please sign in with your username or email and password.
-          </CardDescription>
-        </CardHeader>
-        <CardFooter>
-          <form onSubmit={handleSignIn} className="w-full">
-            {error && (
-              <p className="text-red-500 text-sm mb-4">{error}</p>
-            )}
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700">
-                Username or Email
-              </label>
-              <input
-                type="text"
+    <Center h="100vh">
+      <Card shadow="md" padding="lg" radius="md" w={360}>
+        <Stack gap="md">
+          <div>
+            <Text size="xl" fw={600}>
+              Login
+            </Text>
+            <Text size="sm" c="dimmed">
+              Please sign in with your username or email and password.
+            </Text>
+          </div>
+
+          {error && (
+            <Alert color="red" variant="light">
+              {error}
+            </Alert>
+          )}
+
+          <form onSubmit={handleSignIn}>
+            <Stack gap="md">
+              <TextInput
+                label="Username or Email"
                 value={emailOrUsername}
-                onChange={(e) => setEmailOrUsername(e.target.value)}
+                onChange={(e) => setEmailOrUsername(e.currentTarget.value)}
                 required
-                className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring focus:ring-blue-300"
               />
-            </div>
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700">
-                Password
-              </label>
-              <input
-                type="password"
+
+              <PasswordInput
+                label="Password"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(e) => setPassword(e.currentTarget.value)}
                 required
-                className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring focus:ring-blue-300"
               />
-            </div>
-            <Button type="submit" className="w-full">
-              Sign In
-            </Button>
+
+              <Button type="submit" fullWidth> Sign In </Button>
+            </Stack>
           </form>
-        </CardFooter>
+        </Stack>
       </Card>
-    </div>
+    </Center>
   );
 }

@@ -1,4 +1,5 @@
 import { FC } from "react";
+import { Paper, Text, SimpleGrid } from '@mantine/core';
 
 interface IStat {
   name: string;
@@ -11,17 +12,44 @@ interface IDashboardCardProps {
 
 const DashboardCard: FC<IDashboardCardProps> = ({ stats }) => {
   return (
-    <div >
-      <dl className="grid grid-cols-1 gap-1 overflow-hidden rounded-2xl text-center sm:grid-cols-2 lg:grid-cols-4">
-        {stats.map((stat) => (
-          <div key={stat.name} className="flex flex-col bg-gray-400/5 p-8">
-            <dt className="text-sm/6 font-semibold text-gray-600">{stat.name}</dt>
-            <dd className="order-first text-3xl font-semibold tracking-tight text-gray-900">{stat.value}</dd>
-          </div>
-        ))}
-      </dl>
-    </div>
-  )
+    <SimpleGrid cols={{ base: 1, sm: 2, lg: 4 }} spacing="md">
+      {stats.map((stat) => (
+        <Paper 
+          key={stat.name} 
+          withBorder 
+          p="lg" 
+          radius="md" 
+          bg="gray.0"
+          style={{ 
+            display: 'flex', 
+            flexDirection: 'column', 
+            alignItems: 'center', 
+            justifyContent: 'center' 
+          }}
+        >
+          <Text 
+            size="2rem" 
+            fw={700} 
+            c="dark"
+            style={{ lineHeight: 1 }}
+            ta="center" 
+          >
+            {stat.value}
+          </Text>
+          
+          <Text 
+            size="sm" 
+            fw={500} 
+            c="dimmed" 
+            mt="xs" 
+            ta="center" 
+          >
+            {stat.name}
+          </Text>
+        </Paper>
+      ))}
+    </SimpleGrid>
+  );
 }
 
 export default DashboardCard;

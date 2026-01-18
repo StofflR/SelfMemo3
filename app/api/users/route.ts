@@ -44,6 +44,22 @@ export const POST = async (request: NextRequest) => {
             lastName,
         });
 
+        //Role = Admin => username required
+        if (createUserDto.role === 'admin' && (!createUserDto.username || createUserDto.username.length < 3)) {
+            return new NextResponse(
+                JSON.stringify({ message: "Admins require a username (min. 3 characters)" }), 
+                { status: 400 }
+            );
+        }
+
+        //Role = User => email required
+        if (createUserDto.role === 'user' && !createUserDto.email) {
+            return new NextResponse(
+                JSON.stringify({ message: "Users require a valid email address" }), 
+                { status: 400 }
+            );
+        }
+
         const userService = UserService.getInstance();
         const newUser = await userService.registerUser(createUserDto);
 

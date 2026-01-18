@@ -21,9 +21,10 @@ export class UserService {
     }
 
     async registerUser(user: CreateUserDto) {
+        const emailToCheck = user.email as string;
 
         //check if user already exists
-        const existingUser = await this.getUserByEmail(user.email);
+        const existingUser = await this.getUserByEmail(emailToCheck);
         if (existingUser) {
             throw new Error('User already exists');
         }
@@ -133,7 +134,8 @@ export class UserService {
             throw new Error('Current password is incorrect');
         }
 
-        const hashedPassword = await bcrypt.hash(updateUserPasswordDto.newPassword, 10);
+        const passwordToHash = user.password as string;
+        const hashedPassword = await bcrypt.hash(passwordToHash, 10);
 
         return await this.userRepository.updatePassword(updateUserPasswordDto.id, hashedPassword);
     }

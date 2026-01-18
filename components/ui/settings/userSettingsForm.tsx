@@ -1,20 +1,30 @@
 "use client";
-import { User } from '@prisma/client';
+
 import { FC, useState } from 'react';
-import { UpdateUserDto } from '@/lib/validations/user';
-import { useToast } from 'hooks/useToast';
-import { Button } from '../button';
-import { UpdateUserPasswordDto } from '@/lib/validations/user';
+import { User } from '@prisma/client';
+import { 
+  TextInput, 
+  PasswordInput, 
+  Button, 
+  Group, 
+  Title, 
+  Text, 
+  Grid, 
+  Stack, 
+  Divider, 
+  Paper,
+  Alert 
+} from '@mantine/core';
+import { notifications } from '@mantine/notifications';
+import { IconInfoCircle } from '@tabler/icons-react'; 
+import { UpdateUserDto, UpdateUserPasswordDto } from '@/lib/validations/user';
+type INFUpdateUserPasswordDto = Omit<UpdateUserPasswordDto, 'id'>;
 
 interface INFUserSettingsFormProps {
     user: User;
 }
 
-type INFUpdateUserPasswordDto = Omit<UpdateUserPasswordDto, 'id'>;
-
-
 const UserSettingsForm: FC<INFUserSettingsFormProps> = ({ user }) => {
-
     const [updateUser, setUpdateUser] = useState<UpdateUserDto>({ 
         id: user.id,
         username: user.username,
@@ -23,270 +33,234 @@ const UserSettingsForm: FC<INFUserSettingsFormProps> = ({ user }) => {
         lastName: user.lastName,
         role: user.role as "user" | "admin"
     });
+    const [loadingProfile, setLoadingProfile] = useState(false);
+
     const [updateUserPassword, setUpdateUserPassword] = useState<INFUpdateUserPasswordDto>({ currentPassword: '', newPassword: '' });
     const [secondUserPassword, setSecondUserPassword] = useState<string>('');
     const [passwordError, setPasswordError] = useState<string | null>(null);
-    const toast = useToast();
+    const [loadingPassword, setLoadingPassword] = useState(false);
 
-
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-        const { name, value } = e.target;
-        setUpdateUser((prev) => ({
-            ...prev,
-            [name]: value,
-        }));
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const { name, value } = e.currentTarget;
+        setUpdateUser((prev) => ({ ...prev, [name]: value }));
     }
 
-    const handleChangePassword = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-        const { name, value } = e.target;
-
-        if (name === 'secondPassword') {
-            setSecondUserPassword(value);
-            return;
-        }
-
-        setUpdateUserPassword((prev) => ({
-            ...prev,
-            [name]: value,
-        }));
-    }
-
-
-    const onSubmit = async (e: React.FormEvent) => {
+    const onSubmitProfile = async (e: React.FormEvent) => {
         e.preventDefault();
+        setLoadingProfile(true);
 
         try {
             const response = await fetch(`/api/users/${updateUser.id}`, {
                 method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(updateUser),
             });
 
             if (!response.ok) {
-                const errorData = await response.json(); // Parse the response body
-                throw new Error(errorData.message || `An error occurred: ${response.status}`);
+                const errorData = await response.json();
+                throw new Error(errorData.message || `Error: ${response.status}`);
             }
 
-            toast.success('Settings updated!', 'You have successfully updated the user settings.');
+            notifications.show({
+                title: 'Settings updated!',
+                message: 'You have successfully updated the user settings.',
+                color: 'green',
+            });
 
         } catch (error: any) {
-            console.error(error);
-            toast.error('An error occurred while saving user settings', error.message);
+            notifications.show({
+                title: 'Error',
+                message: error.message,
+                color: 'red',
+            });
+        } finally {
+            setLoadingProfile(false);
         }
     }
 
-    const checkForPasswordErrors = () => {
-
-        if (updateUserPassword.currentPassword === '' || updateUserPassword.newPassword === '' || secondUserPassword === '') {
-            setPasswordError('Please fill all the fields');
-            return true
+    const handleChangePassword = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const { name, value } = e.currentTarget;
+        if (name === 'secondPassword') {
+            setSecondUserPassword(value);
+        } else {
+            setUpdateUserPassword((prev) => ({ ...prev, [name]: value }));
         }
+    }
 
+    const validatePassword = () => {
+        if (!updateUserPassword.currentPassword || !updateUserPassword.newPassword || !secondUserPassword) {
+            setPasswordError('Please fill all fields');
+            return false;
+        }
         if (updateUserPassword.newPassword !== secondUserPassword) {
             setPasswordError('Passwords do not match');
-            return true;
+            return false;
         }
-
-        if (updateUserPassword.newPassword.length < 4) {
-            setPasswordError('Password must be at least 4 characters long');
-            return true;
+        if (updateUserPassword.newPassword.length < 6) {
+            setPasswordError('Password must be at least 6 characters long');
+            return false;
         }
-
         setPasswordError(null);
-        return false;
-    }
+        return true;
+    };
 
     const onSubmitPassword = async (e: React.FormEvent) => {
         e.preventDefault();
-
-        if (checkForPasswordErrors()) return;
+        if (!validatePassword()) return;
+        
+        setLoadingPassword(true);
 
         try {
             const response = await fetch(`/api/users/${updateUser.id}/password`, {
                 method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(updateUserPassword),
             });
 
             if (!response.ok) {
                 const errorData = await response.json();
-                throw new Error(errorData.message || `An error occurred: ${response.status}`);
+                throw new Error(errorData.message || `Error: ${response.status}`);
             }
 
-            toast.success('Password updated!', 'You have successfully updated your password.');
+            notifications.show({
+                title: 'Password updated!',
+                message: 'Your password has been changed successfully.',
+                color: 'green',
+            });
+
+            setUpdateUserPassword({ currentPassword: '', newPassword: '' });
+            setSecondUserPassword('');
 
         } catch (error: any) {
-            console.error(error);
-            toast.error('An error occurred while saving user password', error.message);
+            notifications.show({
+                title: 'Error',
+                message: error.message,
+                color: 'red',
+            });
+        } finally {
+            setLoadingPassword(false);
         }
     }
 
     return (
-        <div>
-            <form onSubmit={onSubmit}>
-                <div className="space-y-12  border-b border-gray-900/10 pb-12">
-                    <div className="grid grid-cols-1 gap-x-8 gap-y-10 md:grid-cols-3">
-                        <div>
-                            <h2 className="text-base/7 font-semibold text-gray-900">Personal Information</h2>
-                            <p className="mt-1 text-sm/6 text-gray-600">Use a permanent address where you can receive mail.</p>
-                        </div>
+        <Stack gap="xl">
+            {/*Personal info*/}
+            <form onSubmit={onSubmitProfile}>
+                <Grid gutter="xl">
+                    <Grid.Col span={{ base: 12, md: 4 }}>
+                        <Title order={4}>Personal Information</Title>
+                        <Text c="dimmed" size="sm" mt={4}>
+                            Use a permanent address where you can receive mail reminders.
+                        </Text>
+                    </Grid.Col>
 
-                        <div className="grid max-w-2xl grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6 md:col-span-2">
-                            <div className="sm:col-span-3">
-                                <label htmlFor="firstName" className="block text-sm/6 font-medium text-gray-900">
-                                    First name
-                                </label>
-                                <div className="mt-2">
-                                    <input
-                                        id="firsName"
+                    <Grid.Col span={{ base: 12, md: 8 }}>
+                        <Paper withBorder p="md" radius="md">
+                            <Stack gap="md">
+                                <Group grow>
+                                    <TextInput
+                                        label="First Name"
                                         name="firstName"
-                                        type="text"
                                         value={updateUser.firstName || ''}
                                         onChange={handleChange}
-                                        autoComplete="given-name"
-                                        className="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
+                                        autoComplete="new-first-name"
                                     />
-                                </div>
-                            </div>
-
-                            <div className="sm:col-span-3">
-                                <label htmlFor="lastName" className="block text-sm/6 font-medium text-gray-900">
-                                    Last name
-                                </label>
-                                <div className="mt-2">
-                                    <input
-                                        id="lastName"
+                                    <TextInput
+                                        label="Last Name"
                                         name="lastName"
                                         value={updateUser.lastName || ''}
                                         onChange={handleChange}
-                                        type="text"
-                                        autoComplete="family-name"
-                                        className="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
+                                        autoComplete="new-last-name"
                                     />
-                                </div>
-                            </div>
+                                </Group>
+                                
+                                <TextInput
+                                    label="Username"
+                                    name="username"
+                                    value={updateUser.username || ''}
+                                    onChange={handleChange}
+                                    autoComplete="username"
+                                />
 
-                            <div className="sm:col-span-6">
-                                <label htmlFor="username" className="block text-sm/6 font-medium text-gray-900">
-                                    Username
-                                </label>
-                                <div className="mt-2">
-                                    <input
-                                        id="username"
-                                        name="username"
-                                        type="text"
-                                        value={updateUser.username || ''}
-                                        onChange={handleChange}
-                                        autoComplete="username"
-                                        className="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
-                                    />
-                                </div>
-                            </div>
+                                <TextInput
+                                    label="E-Mail"
+                                    name="email"
+                                    type="email"
+                                    value={updateUser.email || ''}
+                                    onChange={handleChange}
+                                    autoComplete="email"
+                                />
 
-                            <div className="sm:col-span-6">
-                                <label htmlFor="email" className="block text-sm/6 font-medium text-gray-900">
-                                    Email address
-                                </label>
-                                <div className="mt-2">
-                                    <input
-                                        id="email"
-                                        name="email"
-                                        type="email"
-                                        value={updateUser.email || ''}
-                                        onChange={handleChange}
-                                        autoComplete="email"
-                                        className="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
-                                    />
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="mt-6 flex items-center justify-end gap-x-6">
-                        <Button type="submit">
-                            Save
-                        </Button>
-                    </div>
-                </div>
-
-
+                                <Group justify="flex-end" mt="xs">
+                                    <Button type="submit" loading={loadingProfile}>
+                                        Save Personal Information
+                                    </Button>
+                                </Group>
+                            </Stack>
+                        </Paper>
+                    </Grid.Col>
+                </Grid>
             </form>
-            <form onSubmit={onSubmitPassword} >
-                <div className="space-y-12 mt-12">
-                    <div className="grid grid-cols-1 gap-x-8 gap-y-10 md:grid-cols-3">
-                        <div>
-                            <h2 className="text-base/7 font-semibold text-gray-900">Change Password</h2>
-                            <p className="mt-1 text-sm/6 text-gray-600">Update your password associated with your account.</p>
-                        </div>
 
-                        <div className="grid max-w-2xl grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6 md:col-span-2">
-                            <div className="sm:col-span-6">
-                                <label htmlFor="currentPassword" className="block text-sm/6 font-medium text-gray-900">
-                                    Current Password
-                                </label>
-                                <div className="mt-2">
-                                    <input
-                                        id="currentPassword"
-                                        name="currentPassword"
-                                        type="password"
-                                        value={updateUserPassword.currentPassword}
-                                        onChange={handleChangePassword}
-                                        autoComplete="password"
-                                        className="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
-                                    />
-                                </div>
-                            </div>
-                            <div className="sm:col-span-3">
-                                <label htmlFor="newPassword" className="block text-sm/6 font-medium text-gray-900">
-                                    New Password
-                                </label>
-                                <div className="mt-2">
-                                    <input
-                                        id="newPassword"
+            <Divider />
+
+            {/*Change Pw*/}
+            <form onSubmit={onSubmitPassword}>
+                <Grid gutter="xl">
+                    <Grid.Col span={{ base: 12, md: 4 }}>
+                        <Title order={4}>Change Password</Title>
+                        <Text c="dimmed" size="sm" mt={4}>
+                            Update your password associated with your account.
+                        </Text>
+                    </Grid.Col>
+
+                    <Grid.Col span={{ base: 12, md: 8 }}>
+                        <Paper withBorder p="md" radius="md">
+                            <Stack gap="md">
+                                <PasswordInput
+                                    label="Current Password"
+                                    name="currentPassword"
+                                    value={updateUserPassword.currentPassword}
+                                    onChange={handleChangePassword}
+                                    autoComplete="current-password"
+                                />
+
+                                <Group grow>
+                                    <PasswordInput
+                                        label="New Password"
                                         name="newPassword"
-                                        type="password"
                                         value={updateUserPassword.newPassword}
                                         onChange={handleChangePassword}
-                                        className="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
+                                        autoComplete="new-password"
                                     />
-                                </div>
-                            </div>
-                            <div className="sm:col-span-3">
-                                <label htmlFor="secondPassword" className="block text-sm/6 font-medium text-gray-900">
-                                    Confirm New Password
-                                </label>
-                                <div className="mt-2">
-                                    <input
-                                        id="secondPassword"
+                                    <PasswordInput
+                                        label="Confirm New Password"
                                         name="secondPassword"
-                                        type="password"
                                         value={secondUserPassword}
                                         onChange={handleChangePassword}
-                                        className="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
+                                        autoComplete="new-password"
                                     />
-                                </div>
+                                </Group>
 
-                            </div>
+                                {passwordError && (
+                                    <Alert variant="light" color="red" title="Error" icon={<IconInfoCircle size={16} />}>
+                                        {passwordError}
+                                    </Alert>
+                                )}
 
-                            {passwordError && <div className="sm:col-span-6"><p className="text-red-500 text-sm mt-1">{passwordError}</p></div>}
-
-
-                        </div>
-                    </div>
-                </div>
-
-                <div className="mt-6 flex items-center justify-end gap-x-6">
-                    <Button type="submit">
-                        Save
-                    </Button>
-                </div>
+                                <Group justify="flex-end" mt="xs">
+                                    <Button type="submit" loading={loadingPassword}>
+                                        Update Password
+                                    </Button>
+                                </Group>
+                            </Stack>
+                        </Paper>
+                    </Grid.Col>
+                </Grid>
             </form>
-        </div>
-    )
+
+        </Stack>
+    );
 }
 
 export default UserSettingsForm;
