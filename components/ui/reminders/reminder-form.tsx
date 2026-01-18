@@ -254,7 +254,7 @@ export default function ReminderForm({ reminder, onClose, onSuccess }: ReminderF
       try {
         const response = await fetch('/email-template.json');
         const data = await response.json();
-        const templateKeys = Object.keys(data).map(key => 
+        const templateKeys = Object.keys(data).map(key =>
           key.charAt(0).toUpperCase() + key.slice(1)
         );
         setEmailTemplates(templateKeys);

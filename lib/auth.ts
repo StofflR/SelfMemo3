@@ -2,10 +2,11 @@ import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { authConfig } from "./auth.config";
-import { UserService } from "../services/UserService"; 
+import { UserService } from "../services/UserService";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
+  trustHost: process.env.AUTH_TRUST_HOST === "true" ? true : false,
   providers: [
     Credentials({
       credentials: {
@@ -14,7 +15,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       },
       async authorize(credentials) {
         if (!credentials?.emailOrUsername || !credentials?.password) return null;
-        
+
         const emailOrUsername = credentials.emailOrUsername as string;
         const password = credentials.password as string;
 
@@ -40,7 +41,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     },
     async session({ session, token }) {
       if (token && session.user) {
-        session.user.role = (token.role as string) ?? "user"; 
+        session.user.role = (token.role as string) ?? "user";
         session.user.id = (token.id as string) ?? "";
       }
       return session;

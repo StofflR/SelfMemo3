@@ -81,12 +81,12 @@ export default function RemindersPage() {
             <Title order={2}>Reminders</Title>
             <Text c="dimmed">Manage all of your reminders.</Text>
           </div>
-          <div className="flex gap-2">
+          <Group gap="xs">
             <Button onClick={() => handleCreateReminder()}>
               Create Reminder
             </Button>
             <ExportImportButtons />
-          </div>
+          </Group>
         </Group>
 
         <Paper withBorder shadow="sm" radius="md" p="md">

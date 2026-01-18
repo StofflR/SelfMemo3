@@ -37,7 +37,7 @@ export class NotificationService {
 
   async sendNotification(reminder: Reminder, notificationType: 'reminder' | 'warning' | 'edit' = 'reminder') {
     console.log(`[NotificationService] Triggering reminder: ${reminder.id}`);
-    
+
     var smtpTransport = nodemailer.createTransport({
       host: process.env.SMTP_HOST,
       port: process.env.SMTP_PORT ? parseInt(process.env.SMTP_PORT) : 465,
@@ -57,15 +57,15 @@ export class NotificationService {
 
     // Collect all users to send notifications to
     const usersToNotify: Array<{ email: string; firstName: string; lastName: string }> = [];
-    
-    if (primaryUser) {
+
+    if (primaryUser && primaryUser.email) {
       usersToNotify.push({
         email: primaryUser.email || '',
         firstName: primaryUser.firstName || '',
         lastName: primaryUser.lastName || '',
       });
     } else {
-      console.warn(`[NotificationService] Primary user not found for ID: ${reminder.userId}`);
+      console.warn(`[NotificationService] Primary user not found for ID: ${reminder.userId} with mail ${primaryUser?.email}`);
     }
 
     // Handle multi-user reminders
@@ -76,7 +76,7 @@ export class NotificationService {
 
         for (const userId of additionalUserIds) {
           const user = await userService.getUserById(userId);
-          if (user) {
+          if (user && user.email) {
             usersToNotify.push({
               email: user.email || '',
               firstName: user.firstName || '',
@@ -108,18 +108,18 @@ export class NotificationService {
         const reminderService = ReminderService.getInstance();
         const currentDate = new Date();
         const reminderTimestamps = await reminderService.getReminderTimestamps(currentDate, reminder);
-        
+
         if (reminderTimestamps.length > 0) {
           // Find the next timestamp that is in the future
           const futureTimestamps = reminderTimestamps
             .filter(rt => rt.timestamp * 1000 > currentDate.getTime())
             .sort((a, b) => a.timestamp - b.timestamp);
-          
+
           if (futureTimestamps.length > 0) {
             const nextTimestamp = futureTimestamps[0].timestamp;
             const nextDate = new Date(nextTimestamp * 1000);
             const timezone = reminder.timezone || 'Europe/Berlin';
-            nextDateStr = nextDate.toLocaleString('en-US', { 
+            nextDateStr = nextDate.toLocaleString('en-US', {
               timeZone: timezone,
               dateStyle: 'full',
               timeStyle: 'short'
@@ -140,7 +140,7 @@ export class NotificationService {
     // Send notification to all users
     for (const user of usersToNotify) {
       console.log(`[NotificationService] Preparing email for: ${user.email}`);
-      
+
       let body = template.body
         .replace('{{firstName}}', user.firstName)
         .replace('{{lastName}}', user.lastName)
@@ -158,7 +158,7 @@ export class NotificationService {
         function (error, response) {
           if (error) {
             console.error(`[NotificationService] Failed to send email to ${user.email}:`, error);
-          } 
+          }
         }
       );
     }
@@ -169,7 +169,7 @@ export class NotificationService {
       const reminderService = ReminderService.getInstance();
       reminderService.updateReminderLastSent(reminder.id, timestamp);
     }
-    
+
   }
 
   async checkIfReminderShouldBeNotified(date: Date, reminder: Reminder) {

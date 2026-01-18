@@ -65,7 +65,8 @@ Then configure the following variables:
   - See [Prisma PostgreSQL docs](https://www.prisma.io/docs/orm/overview/databases/postgresql#connection-url)
 
 **Authentication:**
-- `NEXTAUTH_URL`: The URL where your application runs (e.g., `http://localhost:3000`)
+- `AUTH_URL`: The URL where your application runs (e.g., `http://localhost:3000`)
+- `AUTH_TRUST_HOST`: Whether to trust the host header (e.g., `true` or `false`)
 - `AUTH_SECRET`: Generate a secret at [https://generate-secret.vercel.app/32](https://generate-secret.vercel.app/32)
 
 **SMTP Configuration** (for sending reminder emails):
