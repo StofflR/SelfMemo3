@@ -38,7 +38,7 @@ def main():
     print("3) PostgreSQL Database setup only")
     print("4) Everything (Application + Trigger + Database)")
     
-    choice = input("\nEnter your choice (1-5): ").strip()
+    choice = input("\nEnter your choice (1-4): ").strip()
     
     install_app = choice in ['1', '4']
     install_trigger = choice in ['2', '4']

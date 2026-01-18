@@ -1,6 +1,6 @@
 import { CreateUserDto, UpdateUserDto, UpdateUserPasswordDto } from "@/lib/validations/user";
 import IUserRepository from "repositories/IUserRepository";
-import { UserRepository } from "repositories/UserRepository";
+import { createUserRepository } from "repositories/RepositoryFactory";
 import bcrypt from "bcryptjs";
 
 export class UserService {
@@ -9,7 +9,7 @@ export class UserService {
     private userRepository: IUserRepository;
 
     private constructor() {
-        this.userRepository = new UserRepository();
+        this.userRepository = createUserRepository();
     }
 
     public static getInstance(): UserService {
@@ -21,9 +21,10 @@ export class UserService {
     }
 
     async registerUser(user: CreateUserDto) {
+        const emailToCheck = user.email as string;
 
         //check if user already exists
-        const existingUser = await this.getUserByEmail(user.email);
+        const existingUser = await this.getUserByEmail(emailToCheck);
         if (existingUser) {
             throw new Error('User already exists');
         }
@@ -91,6 +92,16 @@ export class UserService {
         }
     }
 
+    async getUserByUsername(username: string) {
+        try {
+            const user = await this.userRepository.getByUsername(username);
+
+            return user;
+        } catch {
+            return null;
+        }
+    }
+
     async updateUser(user: UpdateUserDto) {
 
         const foundUser = await this.getUserById(user.id);
@@ -112,26 +123,29 @@ export class UserService {
 
     async updatePassword(updateUserPasswordDto: UpdateUserPasswordDto) {
         const user = await this.getUserById(updateUserPasswordDto.id);
-
+    
         if (!user) {
             throw new Error('User not found');
         }
-
-        const isPasswordValid = await bcrypt.compare(updateUserPasswordDto.currentPassword, user.password);
-
+    
+        const isPasswordValid = await bcrypt.compare(
+            updateUserPasswordDto.currentPassword, 
+            user.password
+        );
+    
         if (!isPasswordValid) {
             throw new Error('Current password is incorrect');
         }
-
+    
         const hashedPassword = await bcrypt.hash(updateUserPasswordDto.newPassword, 10);
-
+    
         return await this.userRepository.updatePassword(updateUserPasswordDto.id, hashedPassword);
     }
 
     async createDefaultAdminUser() {
 
         if (!process.env.ADMIN_EMAIL || !process.env.ADMIN_PASSWORD) {
-            throw new Error('ADMIN_EMAIL, ADMIN_NAME, and ADMIN_PASSWORD must be set in the environment variables');
+            throw new Error('ADMIN_EMAIL and ADMIN_PASSWORD must be set in the environment variables');
         }
 
         const adminUser: CreateUserDto = {

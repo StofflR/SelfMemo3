@@ -1,7 +1,7 @@
 import { DashboardStatisticDto } from "@/lib/dtos/statistic";
 import { getCurrentUser } from "@/lib/session";
 import IReminderRepository from "repositories/IReminderRepository";
-import { ReminderRepository } from "repositories/ReminderRepository";
+import { createReminderRepository } from "repositories/RepositoryFactory";
 
 export class StatisticService {
     private static instance: StatisticService;
@@ -9,7 +9,7 @@ export class StatisticService {
     private reminderRepository: IReminderRepository;
 
     private constructor() {
-        this.reminderRepository = new ReminderRepository();
+        this.reminderRepository = createReminderRepository();
     }
 
     public static getInstance(): StatisticService {

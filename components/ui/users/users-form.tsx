@@ -1,201 +1,221 @@
-'use client';
+"use client";
 
-import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import { useEffect, useState } from 'react';
+import { 
+  TextInput, 
+  PasswordInput, 
+  Select, 
+  Button, 
+  Group, 
+  Stack, 
+  Text 
+} from '@mantine/core';
+import { notifications } from '@mantine/notifications';
 import { User } from '@prisma/client';
-import { useToast } from 'hooks/useToast';
-import { useRouter } from 'next/navigation';
-import { formatTimestampAsDate, formatTimestampAsDateTime } from '@/lib/utils';
-import { Button } from '../button';
 
-type UserFormDataType = {
-  id: string;
-  username: string;
-  email: string;
-  password: string;
-  role: string;
-  firstName: string;
-  lastName: string;
-}
+
+const OptionalLabel = ({ text }: { text: string }) => (
+  <Group gap={4} component="span"> 
+    <span>{text}</span>
+    <Text span c="dimmed" size="xs" fw="normal" style={{ lineHeight: 1 }}>
+      (optional)
+    </Text>
+  </Group>
+);
 
 interface UserFormProps {
-  user?: User;
+  user?: User | null; 
+  onClose?: () => void; 
+  onSuccess?: () => void; 
 }
 
-const defaultUserValues: UserFormDataType = {
-  id: '',
-  username: '',
-  email: '',
-  password: '',
-  role: '',
-  firstName: '',
-  lastName: '',
-};
+export default function UserForm({ user, onClose, onSuccess }: UserFormProps) {
+  const isEditMode = !!user;
 
-export default function UserForm({ user }: UserFormProps) {
-  const toast = useToast();
-  const router = useRouter();
-  const [isUpdate, setIsUpdate] = useState(false);
-  const [userFormData, setUserFormData] = useState<UserFormDataType>(defaultUserValues);
-  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [password, setPassword] = useState("");
+  const [role, setRole] = useState<string | null>("admin");
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (user) {
-      setIsUpdate(true);
-      setUserFormData(user as UserFormDataType);
+      setUsername(user.username || "");
+      setEmail(user.email || "");
+      setFirstName(user.firstName || "");
+      setLastName(user.lastName || "");
+      setRole(user.role);
+      setPassword(""); 
+    } else {
+      resetForm();
     }
   }, [user]);
 
-  // handle form input changes for basic fields (name, description, type)
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setUserFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+  const resetForm = () => {
+    setUsername("");
+    setEmail("");
+    setFirstName("");
+    setLastName("");
+    setRole("admin");
+    setPassword("");
   };
 
-  // handle form submission
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const isFormValid = () => {
+    if (!role) return false;
+    
+    if (!isEditMode && (!password || password.length < 6)) return false;
+    if (isEditMode && password.length > 0 && password.length < 6) return false;
+
+    if (role === 'admin') {
+      if (!username || username.length < 3) return false;
+    } 
+    
+    if (role === 'user') {
+      const emailRegex = /^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/;
+      if (!email || !emailRegex.test(email)) return false;
+    }
+
+    return true;
+  };
+
+  const handleSubmit = async () => {
+    if (!isFormValid()) return;
+    setLoading(true);
 
     try {
-      setIsSubmitting(true);
-
-      const newFormData = {
-        ...userFormData,
+      const payload = {
+        username: username || undefined,
+        email: email || undefined,
+        firstName: firstName || undefined,
+        lastName: lastName || undefined,
+        role: role,
+        ...(password ? { password } : {}), 
       };
 
-      let response = null;
+      const url = isEditMode ? `/api/users/${user.id}` : "/api/users";
+      const method = isEditMode ? "PUT" : "POST"; 
 
-      if (isUpdate) {
-        response = await axios.put(`/api/users/${userFormData.id ?? ''}`, newFormData);
-        toast.success('User updated!', 'You have successfully updated the user.');
-      } else {
-        response = await axios.post('/api/users', newFormData);
-        toast.success('User created!', 'You have successfully created a new user.');
+      const response = await fetch(url, {
+        method: method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || (errorData.errors && errorData.errors[0]?.message) || "Action failed");
       }
 
-      router.push('/users');
+      notifications.show({
+        title: isEditMode ? 'User updated!' : 'User created!',
+        message: isEditMode ? 'User details have been updated.' : 'New user successfully created.',
+        color: 'green',
+      });
+
+      if (onSuccess) onSuccess(); 
+      if (onClose) onClose();
+      
+      if (!isEditMode) resetForm();
+
     } catch (error: any) {
-
-      const message = error.response?.data?.message || 'An unexpected error occurred.';
-
-      if (isUpdate) {
-        toast.error('Failed to update user.', message);
-      } else {
-        toast.error('Failed to create user.', message);
-      }
-
+      notifications.show({
+        title: 'Error',
+        message: error.message,
+        color: 'red',
+        autoClose: 10000,
+      });
     } finally {
-      setIsSubmitting(false);
+      setLoading(false);
     }
   };
 
-
   return (
-    <form onSubmit={handleSubmit}>
+    <form autoComplete="off">
+      <Stack gap="md">
+        <Text size="sm" c="dimmed">
+          {isEditMode 
+            ? "Edit the user details below." 
+            : "Fill in the required information. Optional fields are marked."}
+        </Text>
 
-      {/* FirstName */}
-      <div className="mb-4">
-        <label className="block text-gray-700 font-medium mb-2" htmlFor="name">
-          First Name
-        </label>
-        <input
-          id="firstName"
-          name="firstName"
-          type="text"
-          value={userFormData.firstName}
-          onChange={handleChange}
-          className={`w-full p-2 border rounded-lg ${formErrors.firstName ? 'border-red-500' : 'border-gray-300'
-            }`}
+        <div style={{ position: 'absolute', opacity: 0, height: 0, width: 0, overflow: 'hidden' }} aria-hidden="true">
+          <input type="text" tabIndex={-1} autoComplete="off" readOnly />
+          <input type="password" tabIndex={-1} autoComplete="off" readOnly />
+        </div>
+
+        <Select
+          label="Role"
+          data={['admin', 'user']}
+          value={role}
+          onChange={(val) => setRole(val || 'admin')}
+          allowDeselect={false} 
         />
-        {formErrors.firstName && <p className="text-red-500 text-sm mt-1">{formErrors.firstName}</p>}
-      </div>
 
-      {/* SurName */}
-      <div className="mb-4">
-        <label className="block text-gray-700 font-medium mb-2" htmlFor="name">
-          Last Name
-        </label>
-        <input
-          id="lastName"
-          name="lastName"
-          type="text"
-          value={userFormData.lastName}
-          onChange={handleChange}
-          className={`w-full p-2 border rounded-lg ${formErrors.lastName ? 'border-red-500' : 'border-gray-300'
-            }`}
+        <TextInput
+          label={!isEditMode ? <OptionalLabel text="First Name" /> : "First Name"}
+          placeholder="Enter First Name"
+          value={firstName}
+          onChange={(e) => setFirstName(e.currentTarget.value)}
+          autoComplete="off"
+          name="new_firstname"
         />
-        {formErrors.lastName && <p className="text-red-500 text-sm mt-1">{formErrors.lastName}</p>}
-      </div>
 
-      {/* Username */}
-      <div className="mb-4">
-        <label className="block text-gray-700 font-medium mb-2" htmlFor="username">
-          Username *
-        </label>
-        <input
-          required
-          id="username"
-          name="username"
-          type="text"
-          value={userFormData.username}
-          onChange={handleChange}
-          className={`w-full p-2 border rounded-lg ${formErrors.username ? 'border-red-500' : 'border-gray-300'
-            }`}
+        <TextInput
+          label={!isEditMode ? <OptionalLabel text="Last Name" /> : "Last Name"}
+          placeholder="Enter Last Name"
+          value={lastName}
+          onChange={(e) => setLastName(e.currentTarget.value)}
+          autoComplete="off"
+          name="new_lastname"
         />
-        {formErrors.username && <p className="text-red-500 text-sm mt-1">{formErrors.username}</p>}
-      </div>
 
-      {/* Email */}
-      <div className="mb-4">
-        <label className="block text-gray-700 font-medium mb-2" htmlFor="name">
-          Email
-        </label>
-        <input
-          id="email"
-          name="email"
+        <TextInput
+          label={(!isEditMode && role === 'user') ? <OptionalLabel text="Username" /> : "Username"}
+          placeholder="Enter Username"
+          value={username}
+          onChange={(e) => setUsername(e.currentTarget.value)}
+          error={role === 'admin' && username.length > 0 && username.length < 3 ? "Min 3 chars" : null}
+          autoComplete="off"
+          name="new_username_field"
+          data-lpignore="true" 
+        />
+
+        <TextInput
+          label={(!isEditMode && role === 'admin') ? <OptionalLabel text="E-Mail" /> : "E-Mail"}
+          placeholder="Enter E-Mail"
           type="email"
-          value={userFormData.email}
-          onChange={handleChange}
-          className={`w-full p-2 border rounded-lg ${formErrors.email ? 'border-red-500' : 'border-gray-300'
-            }`}
+          value={email}
+          onChange={(e) => setEmail(e.currentTarget.value)}
+          error={role === 'user' && email.length > 0 && !/^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/.test(email) ? "Invalid Email" : null}
+          autoComplete="off"
+          name="new_email_field"
+          data-lpignore="true"
         />
-        {formErrors.email && <p className="text-red-500 text-sm mt-1">{formErrors.email}</p>}
-      </div>
 
-      {/* Role */}
-      <div className="mb-4">
-        <label className="block text-gray-700 font-medium mb-2" htmlFor="name">
-          Role
-        </label>
-        <select
-          id="role"
-          name="role"
-          value={userFormData.role}
-          onChange={handleChange}
-          className={`w-full p-2 border rounded-lg ${formErrors.role ? 'border-red-500' : 'border-gray-300'
-            }`}
-        >
-          <option value="" disabled>
-            Select a role
-          </option>
-          <option value="admin">Admin</option>
-          <option value="user">User</option>
-        </select>
-        {formErrors.role && <p className="text-red-500 text-sm mt-1">{formErrors.role}</p>}
-      </div>
-
-      {/* Submit Button */}
-      <Button
-        type="submit"
-        className="w-full bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition disabled:bg-gray-300"
-        disabled={isSubmitting}
-      >
-        {isSubmitting ? 'Sending...' : (isUpdate ? 'Update User' : 'Create User')}
-      </Button>
+        <PasswordInput
+          label={isEditMode ? "Password" : "Password"}
+          placeholder="Enter Password"
+          description={isEditMode ? "Leave empty to keep current password" : null}
+          value={password}
+          onChange={(e) => setPassword(e.currentTarget.value)}
+          error={password.length > 0 && password.length < 6 ? "Min 6 chars" : null}
+          autoComplete="new-password"
+          name="new_password_field"
+        />
+        
+        <Group justify="flex-end" mt="md">
+          {onClose && (
+            <Button variant="default" onClick={onClose} disabled={loading}>
+              Cancel
+            </Button>
+          )}
+          <Button onClick={handleSubmit} disabled={!isFormValid() || loading} loading={loading}>
+            {isEditMode ? "Save Changes" : "Create User"}
+          </Button>
+        </Group>
+      </Stack>
     </form>
   );
-};
+}

@@ -1,16 +1,24 @@
-'use client';
+"use client";
 
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
-import { Reminder } from '@prisma/client';
-import { useToast } from 'hooks/useToast';
-import { useRouter } from 'next/navigation';
-import { formatTimestampAsDate, formatTimestampAsDateTime } from '@/lib/utils';
-import { Button } from '../button';
+import { 
+  TextInput, 
+  Textarea, 
+  Select, 
+  NumberInput, 
+  Checkbox, 
+  Button, 
+  Group, 
+  Stack, 
+  Text,
+  Radio,
+  Box
+} from '@mantine/core';
+import { DatePickerInput, TimeInput } from '@mantine/dates';
+import { notifications } from '@mantine/notifications';
+import { IconCalendar, IconClock } from '@tabler/icons-react'; 
+
 const tzdata = require('tzdata');
-import templates from 'public/reminder-templates.json';
-import DatePicker from 'react-datepicker';
-import 'react-datepicker/dist/react-datepicker.css';
 
 type ReminderFormDataType = {
   id: string;
@@ -20,16 +28,18 @@ type ReminderFormDataType = {
   type: string;
   config: string;
   isDisabled: boolean;
-  lastSent: string | null;
   hasWarnings: boolean;
   warningNumber: number | null;
   warningInterval: string | null;
   warningIntervalNumber: number | null;
   timezone: string | null;
+  emailTemplate: string;
 };
 
 interface ReminderFormProps {
-  reminder?: Reminder;
+  reminder?: any;
+  onClose?: () => void;
+  onSuccess?: () => void;
 }
 
 const defaultReminderValues: ReminderFormDataType = {
@@ -40,1201 +50,625 @@ const defaultReminderValues: ReminderFormDataType = {
   type: '',
   config: '{}',
   isDisabled: false,
-  lastSent: null,
   hasWarnings: false,
   warningNumber: 1,
   warningInterval: '',
   warningIntervalNumber: 1,
-  timezone: 'Europe/Vienna',
+  timezone: 'Etc/GMT',
+  emailTemplate: 'default',
 };
 
-export default function ReminderForm({ reminder }: ReminderFormProps) {
-  const toast = useToast();
-  const router = useRouter();
-  const [isUpdate, setIsUpdate] = useState(false);
-  const [timezones, setTimezones] = useState<Array<{ name: string; alternativeName: string }>>([]);
+export default function ReminderForm({ reminder, onClose, onSuccess }: ReminderFormProps) {
+  const isUpdate = !!reminder;
+  
+  const [timezones, setTimezones] = useState<Array<{ value: string; label: string }>>([]);
   const [reminderFormData, setReminderFormData] = useState<ReminderFormDataType>(defaultReminderValues);
-  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // check if we are updating a reminder or creating a new one
+  const [oneTimeTimestamp, setOneTimeTimestamp] = useState<Date | null>(new Date());
+  
+  const [dailyTime, setDailyTime] = useState<string>('00:00');
+  const [days, setDays] = useState({
+    monday: true, tuesday: true, wednesday: true, thursday: true, friday: true, saturday: true, sunday: true,
+  });
+
+  const [weeklyDay, setWeeklyDay] = useState<string>('monday');
+  const [weeklyTime, setWeeklyTime] = useState<string>('00:00');
+
+  const [nWeeklyWeeks, setNWeeklyWeeks] = useState<number>(1);
+  const [nWeeklyDate, setNWeeklyDate] = useState<Date | null>(new Date());
+  const [nWeeklyTime, setNWeeklyTime] = useState<string>('00:00');
+
+  const [monthlyType, setMonthlyType] = useState<string>('monthlyType1');
+  const [monthlyTime, setMonthlyTime] = useState<string>('00:00');
+  const [monthlyDay, setMonthlyDay] = useState<number>(1);
+  const [monthlyOrderNumber, setMonthlyOrderNumber] = useState<string>('first');
+  const [monthlyWeekDay, setMonthlyWeekDay] = useState<string>('monday');
+
+  const [yearlyType, setYearlyType] = useState<string>('yearlyType1');
+  const [yearlyMonth, setYearlyMonth] = useState<string>('january');
+  const [yearlyDay, setYearlyDay] = useState<number>(1);
+  const [yearlyOrderNumber, setYearlyOrderNumber] = useState<string>('first');
+  const [yearlyWeekDay, setYearlyWeekDay] = useState<string>('monday');
+  const [yearlyTime, setYearlyTime] = useState<string>('00:00');
+  const [selectedYearlyDate, setSelectedYearlyDate] = useState<Date | null>(new Date());
+
+  const [nYearlyYears, setNYearlyYears] = useState<number>(1);
+  const [nYearlyType, setNYearlyType] = useState<string>('yearlyType1');
+  const [nYearlyMonth, setNYearlyMonth] = useState<string>('january');
+  const [nYearlyDay, setNYearlyDay] = useState<number>(1);
+  const [nYearlyOrderNumber, setNYearlyOrderNumber] = useState<string>('first');
+  const [nYearlyWeekDay, setNYearlyWeekDay] = useState<string>('monday');
+  const [nYearlyTime, setNYearlyTime] = useState<string>('00:00');
+  const [selectedNYearlyDate, setSelectedNYearlyDate] = useState<Date | null>(new Date());
+
+  const [hasUntilDate, setHasUntilDate] = useState<boolean>(false);
+  const [untilDate, setUntilDate] = useState<Date | null>(new Date());
+
   useEffect(() => {
     if (reminder) {
-      setIsUpdate(true);
-      setReminderFormData(reminder);
+      setReminderFormData(reminder as ReminderFormDataType);
       const config = JSON.parse(reminder.config);
+      const parseDate = (ts: any) => ts ? new Date(ts * 1000) : new Date();
 
       switch (reminder.type) {
         case 'one-time':
-          setOneTimeTimestamp(formatTimestampAsDateTime(config.timestamp));
+          setOneTimeTimestamp(parseDate(config.timestamp));
           break;
         case 'daily':
-          setDailyTime(config.time as string);
-          setDays(config.repeat);
-          if (config.hasUntilDate) {
-            setHasUntilDate(config.hasUntilDate);
-            setUntilDate(formatTimestampAsDate(config.untilDate));
-          }
+          setDailyTime(config.time || '00:00');
+          setDays(config.repeat || days);
           break;
         case 'weekly':
-          setWeeklyDay(config.day as string);
-          setWeeklyTime(config.time as string);
-          if (config.hasUntilDate) {
-            setHasUntilDate(config.hasUntilDate);
-            setUntilDate(formatTimestampAsDate(config.untilDate));
-          }
+          setWeeklyDay(config.day || 'monday');
+          setWeeklyTime(config.time || '00:00');
           break;
         case 'n-weekly':
-          setNWeeklyWeeks(config.weeks);
-          setNWeeklyDate(formatTimestampAsDate(config.date));
-          setNWeeklyTime(config.time as string);
-          if (config.hasUntilDate) {
-            setHasUntilDate(config.hasUntilDate);
-            setUntilDate(formatTimestampAsDate(config.untilDate));
-          }
+          setNWeeklyWeeks(config.weeks || 1);
+          setNWeeklyDate(parseDate(config.date));
+          setNWeeklyTime(config.time || '00:00');
           break;
         case 'monthly':
-          setMonthlyType(config.type as string);
-          setMonthlyTime(config.time as string);
-          setMonthlyDay(config.day);
-          setMonthlyOrderNumber(config.orderNumber as string);
-          setMonthlyWeekDay(config.weekDay as string);
-          if (config.hasUntilDate) {
-            setHasUntilDate(config.hasUntilDate);
-            setUntilDate(formatTimestampAsDate(config.untilDate));
-          }
+          setMonthlyType(config.type || 'monthlyType1');
+          setMonthlyTime(config.time || '00:00');
+          setMonthlyDay(config.day || 1);
+          setMonthlyOrderNumber(config.orderNumber || 'first');
+          setMonthlyWeekDay(config.weekDay || 'monday');
           break;
         case 'yearly':
-          setYearlyType(config.type as string);
-          setYearlyMonth(config.month as string);
-          setYearlyDay(config.day);
-          setYearlyOrderNumber(config.orderNumber as string);
-          setYearlyWeekDay(config.weekDay as string);
-          setYearlyTime(config.time as string);
-          if (config.hasUntilDate) {
-            setHasUntilDate(config.hasUntilDate);
-            setUntilDate(formatTimestampAsDate(config.untilDate));
-          }
+          setYearlyType(config.type || 'yearlyType1');
+          setYearlyMonth(config.month || 'january');
+          setYearlyDay(config.day || 1);
+          setYearlyOrderNumber(config.orderNumber || 'first');
+          setYearlyWeekDay(config.weekDay || 'monday');
+          setYearlyTime(config.time || '00:00');
+          setSelectedYearlyDate(new Date()); 
           break;
         case 'n-yearly':
-          setNYearlyYears(config.years);
-          setNYearlyType(config.type as string);
-          setNYearlyMonth(config.month as string);
-          setNYearlyDay(config.day);
-          setNYearlyOrderNumber(config.orderNumber as string);
-          setNYearlyWeekDay(config.weekDay as string);
-          setNYearlyTime(config.time as string);
-          if (config.hasUntilDate) {
-            setHasUntilDate(config.hasUntilDate);
-            setUntilDate(formatTimestampAsDate(config.untilDate));
-          }
+          setNYearlyYears(config.years || 1);
+          setNYearlyType(config.type || 'yearlyType1');
+          setNYearlyMonth(config.month || 'january');
+          setNYearlyDay(config.day || 1);
+          setNYearlyOrderNumber(config.orderNumber || 'first');
+          setNYearlyWeekDay(config.weekDay || 'monday');
+          setNYearlyTime(config.time || '00:00');
+          setSelectedNYearlyDate(new Date());
           break;
-        default:
-          break;
-      };
+      }
+
+      if (config.hasUntilDate) {
+        setHasUntilDate(true);
+        setUntilDate(parseDate(config.untilDate));
+      }
+    } else {
+        setReminderFormData(defaultReminderValues);
     }
   }, [reminder]);
 
-  // Load timezones from tzdata
+  // Load timezones
   useEffect(() => {
-    const timezoneList = Object.keys(tzdata.zones)
+    const list = Object.keys(tzdata.zones)
+      .filter(name => name.startsWith('Etc/GMT'))
+      .filter(name => !['Etc/GMT0', 'Etc/GMT-0', 'Etc/GMT+0'].includes(name))
       .sort()
       .map(name => ({
-        name,
-        alternativeName: name.replace(/_/g, ' ')
+        value: name,
+        label: name.replace(/_/g, ' ')
       }));
-    setTimezones(timezoneList);
+    setTimezones(list);
   }, []);
 
-  // Handle template selection
-  const handleTemplateChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const templateId = e.target.value;
-    if (templateId) {
-      const selectedTemplate = templates.templates.find(t => t.id === templateId);
-      if (selectedTemplate) {
-        setReminderFormData((prev) => ({
-          ...prev,
-          description: selectedTemplate.description,
-        }));
-      }
+  const handleTextChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.currentTarget;
+    setReminderFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleSelectChange = (name: string, value: string | null) => {
+    setReminderFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleTypeChange = (value: string | null) => {
+    if (!value) return;
+    setReminderFormData(prev => ({ ...prev, type: value }));
+
+    let newInterval = 'minute';
+    if (value === 'one-time') newInterval = 'day';
+    if (value === 'daily') newInterval = 'hour';
+    if (['weekly', 'n-weekly', 'monthly'].includes(value)) newInterval = 'day';
+    if (['yearly', 'n-yearly'].includes(value)) newInterval = 'week';
+
+    setReminderFormData(prev => ({ ...prev, warningInterval: newInterval }));
+  };
+
+  const handleYearlyDateChange = (date: Date | null, isNYearly = false) => {
+    if (!date) return;
+    const monthName = date.toLocaleString('en-US', { month: 'long' }).toLowerCase();
+    const day = date.getDate();
+
+    if (isNYearly) {
+        setSelectedNYearlyDate(date);
+        setNYearlyMonth(monthName);
+        setNYearlyDay(day);
+    } else {
+        setSelectedYearlyDate(date);
+        setYearlyMonth(monthName);
+        setYearlyDay(day);
     }
   };
 
-  // handle form input changes for basic fields (name, description, type, timezone)
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setReminderFormData((prev) => ({
-      ...prev,
-      [name]: (name === 'timestamp' || name === 'warningNumber' || name === 'warningIntervalNumber') ? Number(value) : value,
-    }));
-  };
-  const handleWarningCheckboxChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setReminderFormData((prev) => ({
-      ...prev,
-      hasWarnings: event.target.checked,
-    }));
-  };
-  const handleTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setReminderFormData((prev) => ({
-      ...prev,
-      [name]: (name === 'timestamp' || name === 'warningNumber' || name === 'warningIntervalNumber') ? Number(value) : value,
-    }));
+  const getTimeStringFromDate = (date: Date | null | string | undefined) => {
+    if (!date) return '00:00';
+    
+    const d = date instanceof Date ? date : new Date(date);
+    
+    if (isNaN(d.getTime())) return '00:00';
 
-    if (!isUpdate) {
-      switch (value) {
-        case 'one-time':
-          defaultReminderValues.warningInterval = 'day';
-          break;
-        case 'daily':
-          defaultReminderValues.warningInterval = 'hour';
-          break;
-        case 'weekly':
-        case 'n-weekly':
-        case 'monthly':
-          defaultReminderValues.warningInterval = 'day';
-          break;
-        case 'yearly':
-        case 'n-yearly':
-          defaultReminderValues.warningInterval = 'week';
-          break;
-        default:
-          defaultReminderValues.warningInterval = 'minute';
-      }
-      setReminderFormData((prev) => ({
-        ...prev,
-        warningInterval: defaultReminderValues.warningInterval,
-      }));
+    const h = d.getHours().toString().padStart(2, '0');
+    const m = d.getMinutes().toString().padStart(2, '0');
+    return `${h}:${m}`;
+  };
+
+  const handleOneTimeTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const timeStr = e.currentTarget.value;
+    if (!timeStr) return;
+
+    let baseDate = oneTimeTimestamp instanceof Date 
+        ? oneTimeTimestamp 
+        : (oneTimeTimestamp ? new Date(oneTimeTimestamp) : new Date());
+
+    if (isNaN(baseDate.getTime())) baseDate = new Date();
+
+    const [hours, minutes] = timeStr.split(':').map(Number);
+    
+    const newDate = new Date(baseDate);
+    newDate.setHours(hours);
+    newDate.setMinutes(minutes);
+    
+    setOneTimeTimestamp(newDate);
+  };
+
+  const createNewConfig = (): any => {
+    const type = reminderFormData.type;
+    let newConfig: any = {};
+    
+
+    const dateToTs = (d: Date | null | string | undefined) => {
+        if (!d) return 0;
+        const dateObj = typeof d === 'string' ? new Date(d) : d;
+        if (isNaN(dateObj.getTime())) return 0;
+        return dateObj.getTime() / 1000;
+    };
+
+    switch (type) {
+      case 'one-time':
+        newConfig.timestamp = dateToTs(oneTimeTimestamp);
+        break;
+      case 'daily':
+        newConfig.time = dailyTime;
+        newConfig.repeat = days;
+        break;
+      case 'weekly':
+        newConfig.time = weeklyTime;
+        newConfig.day = weeklyDay;
+        break;
+      case 'n-weekly':
+        newConfig.weeks = nWeeklyWeeks;
+        newConfig.date = dateToTs(nWeeklyDate);
+        newConfig.time = nWeeklyTime;
+        break;
+      case 'monthly':
+        newConfig.type = monthlyType;
+        newConfig.time = monthlyTime;
+        newConfig.day = monthlyDay;
+        newConfig.orderNumber = monthlyOrderNumber;
+        newConfig.weekDay = monthlyWeekDay;
+        break;
+      case 'yearly':
+        newConfig.type = yearlyType;
+        newConfig.month = yearlyMonth;
+        newConfig.day = yearlyDay;
+        newConfig.orderNumber = yearlyOrderNumber;
+        newConfig.weekDay = yearlyWeekDay;
+        newConfig.time = yearlyTime;
+        break;
+      case 'n-yearly':
+        newConfig.years = nYearlyYears;
+        newConfig.type = nYearlyType;
+        newConfig.month = nYearlyMonth;
+        newConfig.day = nYearlyDay;
+        newConfig.orderNumber = nYearlyOrderNumber;
+        newConfig.weekDay = nYearlyWeekDay;
+        newConfig.time = nYearlyTime;
+        break;
     }
+
+    newConfig.hasUntilDate = hasUntilDate;
+    if (hasUntilDate) {
+      newConfig.untilDate = dateToTs(untilDate);
+    }
+    return newConfig;
   };
 
-  const handleIsActiveCheckboxChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setReminderFormData((prev) => ({
-      ...prev,
-      isDisabled: !event.target.checked,
-    }));
-  }
-
-  // handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!reminderFormData.name || !reminderFormData.type) {
+        notifications.show({ message: 'Name and Type are required', color: 'red' });
+        return;
+    }
 
+    setIsSubmitting(true);
     try {
-      setIsSubmitting(true);
-      let newConfig = createNewConfig(reminderFormData.config, reminderFormData.type);
-
-      const newFormData = {
+      const configObj = createNewConfig();
+      const payload = {
         ...reminderFormData,
-        config: JSON.stringify(newConfig),
+        config: JSON.stringify(configObj),
       };
 
-      if (isUpdate) {
-        await axios.put(`/api/reminders/${reminderFormData.id ?? ''}`, newFormData);
-        toast.success('Reminder updated!', 'You have successfully updated the reminder.');
-      } else {
-        await axios.post('/api/reminders', newFormData);
-        toast.success('Reminder created!', 'You have successfully created a new reminder.');
-      }
-      router.push('/reminders');
-    } catch (error) {
-      console.error(error);
+      const url = isUpdate ? `/api/reminders/${reminderFormData.id}` : '/api/reminders';
+      const method = isUpdate ? 'PUT' : 'POST';
 
-      if (isUpdate) {
-        toast.error('Failed to update reminder.', 'An error occurred while updating the reminder.');
-      } else {
-        toast.error('Failed to create reminder.', 'An error occurred while creating the reminder.');
-      }
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
 
+      if (!res.ok) throw new Error('Failed to save');
+
+      notifications.show({ 
+        title: isUpdate ? 'Updated' : 'Created', 
+        message: 'Reminder saved successfully', 
+        color: 'green' 
+      });
+
+      if (onSuccess) onSuccess();
+      if (onClose) onClose();
+
+    } catch (error: any) {
+      notifications.show({ title: 'Error', message: error.message, color: 'red' });
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  // create new config (json properties of reminder type)
-  const createNewConfig = (config: string, type: string): string => {
-    try {
-      let newConfig = JSON.parse(config);
-
-      switch (type) {
-        case 'one-time':
-          newConfig.timestamp = new Date(oneTimeTimestamp).getTime() / 1000;
-          break;
-        case 'daily':
-          newConfig.time = dailyTime;
-          newConfig.repeat = days;
-          newConfig.hasUntilDate = hasUntilDate;
-          if (hasUntilDate) {
-            newConfig.untilDate = new Date(untilDate).getTime() / 1000;
-          }
-          break;
-        case 'weekly':
-          newConfig.time = weeklyTime;
-          newConfig.day = weeklyDay;
-          newConfig.hasUntilDate = hasUntilDate;
-          if (hasUntilDate) {
-            newConfig.untilDate = new Date(untilDate).getTime() / 1000;
-          }
-          break;
-        case 'n-weekly':
-          newConfig.weeks = nWeeklyWeeks;
-          newConfig.date = new Date(nWeeklyDate).getTime() / 1000;
-          newConfig.time = nWeeklyTime;
-          newConfig.hasUntilDate = hasUntilDate;
-          if (hasUntilDate) {
-            newConfig.untilDate = new Date(untilDate).getTime() / 1000;
-          }
-          break;
-        case 'monthly':
-          newConfig.type = monthlyType;
-          newConfig.time = monthlyTime;
-          newConfig.day = monthlyDay;
-          newConfig.orderNumber = monthlyOrderNumber;
-          newConfig.weekDay = monthlyWeekDay;
-          newConfig.hasUntilDate = hasUntilDate;
-          if (hasUntilDate) {
-            newConfig.untilDate = new Date(untilDate).getTime() / 1000;
-          }
-          break;
-        case 'yearly':
-          newConfig.type = yearlyType;
-          newConfig.month = yearlyMonth;
-          newConfig.day = yearlyDay;
-          newConfig.orderNumber = yearlyOrderNumber;
-          newConfig.weekDay = yearlyWeekDay;
-          newConfig.time = yearlyTime;
-          newConfig.hasUntilDate = hasUntilDate;
-          if (hasUntilDate) {
-            newConfig.untilDate = new Date(untilDate).getTime() / 1000;
-          }
-          break;
-        case 'n-yearly':
-          newConfig.years = nYearlyYears;
-          newConfig.type = nYearlyType;
-          newConfig.month = nYearlyMonth;
-          newConfig.day = nYearlyDay;
-          newConfig.orderNumber = nYearlyOrderNumber;
-          newConfig.weekDay = nYearlyWeekDay;
-          newConfig.time = nYearlyTime;
-          newConfig.hasUntilDate = hasUntilDate;
-          if (hasUntilDate) {
-            newConfig.untilDate = new Date(untilDate).getTime() / 1000;
-          }
-          break;
-        default:
-          break;
-      }
-
-      return newConfig;
-    } catch {
-      return config;
-    }
-  }
-
-  /** ONE TIME PROPS */
-  const [oneTimeTimestamp, setOneTimeTimestamp] = useState<string>(formatTimestampAsDateTime(Math.round(new Date().getTime() / 1000)));
-  const handleOneTimeTimestampChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setOneTimeTimestamp(e.target.value);
-  };
-
-  /** DAILY PROPS */
-  const [dailyTime, setDailyTime] = useState<string>('00:00');
-  const handleDailyTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setDailyTime(e.target.value);
-  };
-  const [days, setDays] = useState({
-    monday: true,
-    tuesday: true,
-    wednesday: true,
-    thursday: true,
-    friday: true,
-    saturday: true,
-    sunday: true,
-  });
-  const handleCheckboxChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, checked } = event.target;
-    setDays((prevDays) => ({
-      ...prevDays,
-      [name]: checked,
-    }));
-  };
-
-  /** WEEKLY PROPS */
-  const [weeklyDay, setWeeklyDay] = useState<string>('monday');
-  const handleWeeklyDayChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setWeeklyDay(e.target.value);
-  };
-  const [weeklyTime, setWeeklyTime] = useState<string>('00:00');
-  const handleWeeklyTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setWeeklyTime(e.target.value);
-  };
-
-  /** N-WEEKLY PROPS */
-  const [nWeeklyWeeks, setNWeeklyWeeks] = useState<number>(1);
-  const handleNWeeklyWeeksChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setNWeeklyWeeks(parseInt(e.target.value));
-  };
-  const [nWeeklyDate, setNWeeklyDate] = useState<string>(formatTimestampAsDate(Math.round(new Date().getTime() / 1000)));
-  const handleNWeeklyDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setNWeeklyDate(e.target.value);
-  };
-  const [nWeeklyTime, setNWeeklyTime] = useState<string>('00:00');
-  const handleNWeeklyTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setNWeeklyTime(e.target.value);
-  };
-
-  /** MONTHLY PROPS */
-  const [monthlyType, setMonthlyType] = useState<string>('monthlyType1');
-  const handleMonthlyTypeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setMonthlyType(e.target.value);
-  };
-  const [monthlyTime, setMonthlyTime] = useState<string>('00:00');
-  const handleMonthlyTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setMonthlyTime(e.target.value);
-  };
-  const [monthlyDay, setMonthlyDay] = useState<number>(1);
-  const handleMonthlyDayChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setMonthlyDay(parseInt(e.target.value));
-  };
-  const [monthlyOrderNumber, setMonthlyOrderNumber] = useState<string>('first');
-  const handleMonthlyOrderNumberChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setMonthlyOrderNumber(e.target.value);
-  };
-  const [monthlyWeekDay, setMonthlyWeekDay] = useState<string>('monday');
-  const handleMonthlyWeekDayChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setMonthlyWeekDay(e.target.value);
-  };
-
-  /** YEARLY PROPS */
-  const [yearlyType, setYearlyType] = useState<string>('yearlyType1');
-  const handleYearlyTypeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setYearlyType(e.target.value);
-  };
-  const [yearlyMonth, setYearlyMonth] = useState<string>('january');
-  const handleYearlyMonthChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setYearlyMonth(e.target.value);
-  };
-  const [yearlyDay, setYearlyDay] = useState<number>(1);
-  const handleYearlyDayChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setYearlyDay(parseInt(e.target.value));
-  };
-  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
-
-  const [yearlyOrderNumber, setYearlyOrderNumber] = useState<string>('first');
-  const handleYearlyOrderNumberChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setYearlyOrderNumber(e.target.value);
-  };
-  const [yearlyWeekDay, setYearlyWeekDay] = useState<string>('monday');
-  const handleYearlyWeekDayChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setYearlyWeekDay(e.target.value);
-  };
-  const [yearlyTime, setYearlyTime] = useState<string>('00:00');
-  const handleYearlyTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setYearlyTime(e.target.value);
-  };
-
-  /** N-YEARLY PROPS */
-  const [nYearlyYears, setNYearlyYears] = useState<number>(1);
-  const handleNYearlyYearsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setNYearlyYears(parseInt(e.target.value));
-  };
-  const [nYearlyType, setNYearlyType] = useState<string>('yearlyType1');
-  const handleNYearlyTypeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setNYearlyType(e.target.value);
-  };
-  const [nYearlyMonth, setNYearlyMonth] = useState<string>('january');
-  const handleNYearlyMonthChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setNYearlyMonth(e.target.value);
-  };
-  const [nYearlyDay, setNYearlyDay] = useState<number>(1);
-  const handleNYearlyDayChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setNYearlyDay(parseInt(e.target.value));
-  };
-  const [nYearlyOrderNumber, setNYearlyOrderNumber] = useState<string>('first');
-  const handleNYearlyOrderNumberChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setNYearlyOrderNumber(e.target.value);
-  };
-  const [nYearlyWeekDay, setNYearlyWeekDay] = useState<string>('monday');
-  const handleNYearlyWeekDayChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setNYearlyWeekDay(e.target.value);
-  };
-  const [nYearlyTime, setNYearlyTime] = useState<string>('00:00');
-  const handleNYearlyTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setNYearlyTime(e.target.value);
-  };
-
-  /** UNTIL DATE PROPS */
-  const [hasUntilDate, setHasUntilDate] = useState<boolean>(false);
-  const handleHasUntilDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setHasUntilDate(e.target.checked);
-  };
-  const [untilDate, setUntilDate] = useState<string>(formatTimestampAsDate(Math.round(new Date().getTime() / 1000)));
-  const handleUntilDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setUntilDate(e.target.value);
-  };
+  const weekdays = [
+    { value: 'monday', label: 'Monday' },
+    { value: 'tuesday', label: 'Tuesday' },
+    { value: 'wednesday', label: 'Wednesday' },
+    { value: 'thursday', label: 'Thursday' },
+    { value: 'friday', label: 'Friday' },
+    { value: 'saturday', label: 'Saturday' },
+    { value: 'sunday', label: 'Sunday' },
+  ];
+  
+  const orderNumbers = [
+    { value: 'first', label: 'First' }, { value: 'second', label: 'Second' },
+    { value: 'third', label: 'Third' }, { value: 'fourth', label: 'Fourth' },
+  ];
 
   return (
-    <form onSubmit={handleSubmit}>
-      {/* Name */}
-      <div className="mb-4">
-        <label className="block text-gray-700 font-medium mb-2" htmlFor="name">
-          Name
-        </label>
-        <input
-          required
-          id="name"
-          name="name"
-          type="text"
-          value={reminderFormData.name}
-          onChange={handleChange}
-          className={`w-full p-2 border rounded-lg ${
-            formErrors.name ? 'border-red-500' : 'border-gray-300'
-          }`}
+    <form onSubmit={handleSubmit} autoComplete="off">
+      <Stack gap="md">
+        
+        <TextInput 
+          label="Name" 
+          name="name" 
+          value={reminderFormData.name} 
+          onChange={handleTextChange} 
+          required 
         />
-        {formErrors.name && (
-          <p className="text-red-500 text-sm mt-1">{formErrors.name}</p>
-        )}
-      </div>
+        
+        <Textarea 
+          label="Description" 
+          name="description" 
+          value={reminderFormData.description} 
+          onChange={handleTextChange} 
+          rows={3} 
+        />
 
-      {/* Template Selection */}
-      <div className="mb-4">
-        <label
-          className="block text-gray-700 font-medium mb-2"
-          htmlFor="template"
-        >
-          Use Template (Optional)
-        </label>
-        <select
-          id="template"
-          name="template"
-          onChange={handleTemplateChange}
-          className="w-full p-2 border rounded-lg border-gray-300"
-        >
-          <option value="">-- Select a template --</option>
-          {templates.templates.map((template) => (
-            <option key={template.id} value={template.id}>
-              {template.name}
-            </option>
-          ))}
-        </select>
-        <p className="text-gray-500 text-sm mt-1">
-          Select a template to auto-fill the description field
-        </p>
-      </div>
+        <Group grow>
+            <Select 
+            label="Timezone"
+            data={timezones}
+            value={reminderFormData.timezone}
+            onChange={(val) => handleSelectChange('timezone', val)}
+            searchable
+            />
+            
+            <Select 
+            label="Email Template"
+            data={['default', 'birthday', 'meeting', 'task']}
+            value={reminderFormData.emailTemplate}
+            onChange={(val) => handleSelectChange('emailTemplate', val)}
+            />
+        </Group>
 
-      {/* Description */}
-      <div className="mb-4">
-        <label className="block text-gray-700 font-medium mb-2" htmlFor="name">
-          Description
-        </label>
-        <textarea
-          id="description"
-          name="description"
-          onChange={handleChange}
-          value={reminderFormData.description}
-          rows={6}
-          className={`w-full p-2 border rounded-lg ${
-            formErrors.name ? 'border-red-500' : 'border-gray-300'
-          }`}
-        ></textarea>
-        {formErrors.name && (
-          <p className="text-red-500 text-sm mt-1">{formErrors.name}</p>
-        )}
-      </div>
-
-      {/* Timezone */}
-      <div className="mb-4">
-        <label
-          className="block text-gray-700 font-medium mb-2"
-          htmlFor="timezone"
-        >
-          Timezone
-        </label>
-        <select
-          id="timezone"
-          name="timezone"
-          value={reminderFormData.timezone ?? 'Europe/Vienna'}
-          onChange={handleChange}
-          className={`w-full p-2 border rounded-lg ${formErrors.timezone ? 'border-red-500' : 'border-gray-300'}`}
-        >
-          {timezones.map((tz) => (
-            <option key={tz.name} value={tz.name}>
-              {tz.name} ({tz.alternativeName})
-            </option>
-          ))}
-        </select>
-        {formErrors.timezone && (
-          <p className="text-red-500 text-sm mt-1">{formErrors.timezone}</p>
-        )}
-      </div>
-
-      {/* Type */}
-      <div className="mb-4">
-        <label className="block text-gray-700 font-medium mb-2" htmlFor="type">
-          Type
-        </label>
-        <select
+        <Select 
+          label="Type"
           required
-          id="type"
-          name="type"
           value={reminderFormData.type}
           onChange={handleTypeChange}
-          className={`w-full p-2 border rounded-lg ${
-            formErrors.type ? 'border-red-500' : 'border-gray-300'
-          }`}
-        >
-          <option></option>
-          <option value="one-time">One-time</option>
-          <option value="daily">Daily</option>
-          <option value="weekly">Weekly</option>
-          <option value="n-weekly">N-Weekly</option>
-          <option value="monthly">Monthly</option>
-          <option value="yearly">Yearly</option>
-          <option value="n-yearly">N-Yearly</option>
-        </select>
-      </div>
-
-      {/* REMINDER TYPE */}
-      <div className="p-4 pt-2">
+          data={[
+            { value: 'one-time', label: 'One-time' },
+            { value: 'daily', label: 'Daily' },
+            { value: 'weekly', label: 'Weekly' },
+            { value: 'n-weekly', label: 'N-Weekly' },
+            { value: 'monthly', label: 'Monthly' },
+            { value: 'yearly', label: 'Yearly' },
+            { value: 'n-yearly', label: 'N-Yearly' },
+          ]}
+        />
+        
+        {/* ONE TIME */}
         {reminderFormData.type === 'one-time' && (
-          <div className="mb-4">
-            <div className="my-2">This event occurs once at</div>
-            <input
-              onChange={handleOneTimeTimestampChange}
-              value={oneTimeTimestamp}
-              type="datetime-local"
-              id="oneTimeDateTimestamp"
-              name="oneTimeDateTimestamp"
-              className={`w-full p-2 border rounded-lg ${
-                formErrors.name ? 'border-red-500' : 'border-gray-300'
-              }`}
-            />
-          </div>
+            <Group grow>
+                <DatePickerInput
+                    label="Date"
+                    value={oneTimeTimestamp}
+                    onChange={(d) => setOneTimeTimestamp(d as Date | null)}
+                    valueFormat="DD.MM.YYYY"
+                    leftSection={<IconCalendar size={18} stroke={1.5} />}
+                    placeholder="Pick date"
+                />
+                <TimeInput 
+                    label="Time" 
+                    value={getTimeStringFromDate(oneTimeTimestamp)} 
+                    onChange={handleOneTimeTimeChange} 
+                    leftSection={<IconClock size={16}/>} 
+                />
+            </Group>
         )}
 
         {reminderFormData.type === 'daily' && (
-          <div className="mb-4">
-            <div className="my-2">This event occurs daily at</div>
-            <input
-              onChange={handleDailyTimeChange}
-              value={dailyTime}
-              type="time"
-              id="dailyTime"
-              name="dailyTime"
-              className={`w-full p-2 border rounded-lg ${
-                formErrors.name ? 'border-red-500' : 'border-gray-300'
-              }`}
-            />
-            <div className="my-2">and should be repeated on:</div>
-            <div className="flex items-center space-x-4">
-              {Object.entries(days).map(([day, isChecked]) => (
-                <div key={day}>
-                  <label>
-                    <input
-                      className="mr-2"
-                      type="checkbox"
-                      name={day}
-                      checked={isChecked}
-                      onChange={handleCheckboxChange}
+            <Stack>
+                <TimeInput label="Time" value={dailyTime} onChange={(e) => setDailyTime(e.currentTarget.value)} leftSection={<IconClock size={16}/>} />
+                <Text size="sm" fw={500}>Repeat on:</Text>
+                <Group gap="xs">
+                  {Object.keys(days).map((day) => (
+                    <Checkbox 
+                        key={day}
+                        label={day.substring(0,3).toUpperCase()}
+                        checked={(days as any)[day]}
+                        onChange={(e) => {
+                            const isChecked = e.currentTarget.checked;
+                            setDays(p => ({ ...p, [day]: isChecked }));
+                        }}
                     />
-                    {day.charAt(0).toUpperCase() + day.slice(1)}
-                  </label>
-                </div>
-              ))}
-            </div>
-          </div>
+                    ))}
+                </Group>
+            </Stack>
         )}
 
         {reminderFormData.type === 'weekly' && (
-          <div className="mb-4">
-            <div className="my-2">This event occurs every</div>
-            <select
-              id="weeklyDay"
-              name="weeklyDay"
-              value={weeklyDay}
-              onChange={handleWeeklyDayChange}
-              className={`w-full p-2 border rounded-lg ${
-                formErrors.type ? 'border-red-500' : 'border-gray-300'
-              }`}
-            >
-              <option value="monday">Monday</option>
-              <option value="tuesday">Tuesday</option>
-              <option value="wednesday">Wednesday</option>
-              <option value="thursday">Thursday</option>
-              <option value="friday">Friday</option>
-              <option value="saturday">Saturday</option>
-              <option value="sunday">Sunday</option>
-            </select>
-            <div className="my-2">at</div>
-            <input
-              onChange={handleWeeklyTimeChange}
-              value={weeklyTime}
-              type="time"
-              id="weeklyTime"
-              name="weeklyTime"
-              className={`w-full p-2 border rounded-lg ${
-                formErrors.name ? 'border-red-500' : 'border-gray-300'
-              }`}
-            />
-          </div>
+            <Group grow>
+                <Select label="Day" data={weekdays} value={weeklyDay} onChange={(v) => setWeeklyDay(v || 'monday')} />
+                <TimeInput label="Time" value={weeklyTime} onChange={(e) => setWeeklyTime(e.currentTarget.value)} leftSection={<IconClock size={16}/>} />
+            </Group>
         )}
 
+        {/* N-WEEKLY */}
         {reminderFormData.type === 'n-weekly' && (
-          <div className="mb-4">
-            <div className="my-2">This event occurs every</div>
-            <input
-              onChange={handleNWeeklyWeeksChange}
-              value={nWeeklyWeeks}
-              type="number"
-              min="1"
-              id="nWeeklyWeeks"
-              name="nWeeklyWeeks"
-              className={`w-full p-2 border rounded-lg ${
-                formErrors.name ? 'border-red-500' : 'border-gray-300'
-              }`}
-            />
-            <div className="my-2">week(s), starting</div>
-            <input
-              onChange={handleNWeeklyDateChange}
-              value={nWeeklyDate}
-              type="date"
-              id="nWeeklyDate"
-              name="nWeeklyDate"
-              className={`w-full p-2 border rounded-lg ${
-                formErrors.name ? 'border-red-500' : 'border-gray-300'
-              }`}
-            />
-            <div className="my-2">at</div>
-            <input
-              onChange={handleNWeeklyTimeChange}
-              value={nWeeklyTime}
-              type="time"
-              id="nWeeklyTime"
-              name="nWeeklyTime"
-              className={`w-full p-2 border rounded-lg ${
-                formErrors.name ? 'border-red-500' : 'border-gray-300'
-              }`}
-            />
-          </div>
+            <Stack>
+                <Group grow>
+                    <NumberInput label="Every (weeks)" value={nWeeklyWeeks} onChange={(v) => setNWeeklyWeeks(Number(v))} min={1} />
+                    <DatePickerInput 
+                        label="Starting From" 
+                        value={nWeeklyDate} 
+                        onChange={(d) => setNWeeklyDate(d as Date | null)}
+                        leftSection={<IconCalendar size={18} stroke={1.5} />}
+                        valueFormat="DD.MM.YYYY"
+                    />
+                </Group>
+                <TimeInput label="Time" value={nWeeklyTime} onChange={(e) => setNWeeklyTime(e.currentTarget.value)} leftSection={<IconClock size={16}/>} />
+            </Stack>
         )}
 
         {reminderFormData.type === 'monthly' && (
-          <div className="mb-4">
-            <div className="my-2">This event occurs at</div>
-            <input
-              onChange={handleMonthlyTimeChange}
-              value={monthlyTime}
-              type="time"
-              id="monthlyTime"
-              name="monthlyTime"
-              className={`w-full p-2 border rounded-lg ${
-                formErrors.name ? 'border-red-500' : 'border-gray-300'
-              }`}
-            />
-            <div className="flex items-center my-2">
-              <input
-                checked={monthlyType === 'monthlyType1'}
-                onChange={handleMonthlyTypeChange}
-                value="monthlyType1"
-                id="monthlyType1"
-                name="monthlyType"
-                type="radio"
-                className="relative size-4 appearance-none rounded-full border border-gray-300 bg-white before:absolute before:inset-1 before:rounded-full before:bg-white checked:border-indigo-600 checked:bg-indigo-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:border-gray-300 disabled:bg-gray-100 disabled:before:bg-gray-400 forced-colors:appearance-auto forced-colors:before:hidden [&:not(:checked)]:before:hidden"
-              />
-              <label
-                htmlFor="monthlyType1"
-                className="ml-3 text-sm/6 font-medium text-gray-900 flex items-center"
-              >
-                <span>on the</span>
-                <input
-                  onChange={handleMonthlyDayChange}
-                  value={monthlyDay}
-                  type="number"
-                  min="1"
-                  max="31"
-                  id="monthlyDay"
-                  name="monthlyDay"
-                  className={`w-14 p-2 mx-2 border rounded-lg ${formErrors.name ? 'border-red-500' : 'border-gray-300'}`}
-                />
-                <span>day of every month.</span>
-              </label>
-            </div>
-            <div className="flex items-center">
-              <input
-                checked={monthlyType === 'monthlyType2'}
-                onChange={handleMonthlyTypeChange}
-                value="monthlyType2"
-                id="monthlyType2"
-                name="monthlyType"
-                type="radio"
-                className="relative size-4 appearance-none rounded-full border border-gray-300 bg-white before:absolute before:inset-1 before:rounded-full before:bg-white checked:border-indigo-600 checked:bg-indigo-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:border-gray-300 disabled:bg-gray-100 disabled:before:bg-gray-400 forced-colors:appearance-auto forced-colors:before:hidden [&:not(:checked)]:before:hidden"
-              />
-              <label
-                htmlFor="monthlyType2"
-                className="ml-3 text-sm/6 font-medium text-gray-900 flex items-center"
-              >
-                <span>on the</span>
-                <select
-                  id="monthlyOrderNumber"
-                  name="monthlyOrderNumber"
-                  value={monthlyOrderNumber}
-                  onChange={handleMonthlyOrderNumberChange}
-                  className={`mx-2 p-2 border rounded-lg ${
-                    formErrors.type ? 'border-red-500' : 'border-gray-300'
-                  }`}
-                >
-                  <option value="first">first</option>
-                  <option value="second">second</option>
-                  <option value="third">third</option>
-                  <option value="fourth">fourth</option>
-                </select>
-                <select
-                  id="monthlyWeekDay"
-                  name="monthlyWeekDay"
-                  value={monthlyWeekDay}
-                  onChange={handleMonthlyWeekDayChange}
-                  className={`mx-2 p-2 border rounded-lg ${
-                    formErrors.type ? 'border-red-500' : 'border-gray-300'
-                  }`}
-                >
-                  <option value="monday">Monday</option>
-                  <option value="tuesday">Tuesday</option>
-                  <option value="wednesday">Wednesday</option>
-                  <option value="thursday">Thursday</option>
-                  <option value="friday">Friday</option>
-                  <option value="saturday">Saturday</option>
-                  <option value="sunday">Sunday</option>
-                </select>
-                <span>of every month.</span>
-              </label>
-            </div>
-          </div>
+             <Stack>
+                <TimeInput label="Time" value={monthlyTime} onChange={(e) => setMonthlyTime(e.currentTarget.value)} leftSection={<IconClock size={16}/>}/>
+                <Radio.Group value={monthlyType} onChange={setMonthlyType} label="Pattern">
+                    <Stack mt="xs">
+                        <Radio value="monthlyType1" label={
+                            <Group gap="xs">
+                                <Text size="sm">Day</Text>
+                                <NumberInput size="xs" w={60} value={monthlyDay} onChange={(v) => setMonthlyDay(Number(v))} min={1} max={31}/>
+                                <Text size="sm">of every month</Text>
+                            </Group>
+                        } />
+                        <Radio value="monthlyType2" label={
+                            <Group gap="xs">
+                                <Text size="sm">The</Text>
+                                <Select size="xs" w={110} data={orderNumbers} value={monthlyOrderNumber} onChange={(v) => setMonthlyOrderNumber(v!)} />
+                                <Select size="xs" w={130} data={weekdays} value={monthlyWeekDay} onChange={(v) => setMonthlyWeekDay(v!)} />
+                            </Group>
+                        } />
+                    </Stack>
+                </Radio.Group>
+             </Stack>
         )}
 
+        {/* YEARLY */}
         {reminderFormData.type === 'yearly' && (
-          <div className="mb-4">
-            <div className="my-2">This event occurs every year</div>
-            <div className="flex items-center my-2">
-              <input
-                checked={yearlyType === 'yearlyType1'}
-                onChange={handleYearlyTypeChange}
-                value="yearlyType1"
-                id="yearlyType1"
-                name="yearlyType"
-                type="radio"
-                className="relative size-4 appearance-none rounded-full border border-gray-300 bg-white before:absolute before:inset-1 before:rounded-full before:bg-white checked:border-indigo-600 checked:bg-indigo-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:border-gray-300 disabled:bg-gray-100 disabled:before:bg-gray-400 forced-colors:appearance-auto forced-colors:before:hidden [&:not(:checked)]:before:hidden"
-              />
-              <label
-                htmlFor="yearlyType1"
-                className="ml-3 text-sm/6 font-medium text-gray-900 flex items-center"
-              >
-                <span>on the</span>
-                <DatePicker
-                  selected={selectedDate}
-                  onChange={(date: Date) => {
-                    if (date) {
-                      setSelectedDate(date);
-                      setYearlyMonth(
-                        date
-                          .toLocaleString('en-US', { month: 'long' })
-                          .toLowerCase()
-                      );
-                      setYearlyDay(date.getDate());
-                    }
-                  }}
-                  dateFormat="d MMMM"
-                  showMonthDropdown
-                  showYearDropdown={false}
-                  className="w-32 mx-2 p-2 border rounded-lg border-gray-300"
-                />
-              </label>
-            </div>
-            <div className="flex items-center">
-              <input
-                checked={yearlyType === 'yearlyType2'}
-                onChange={handleYearlyTypeChange}
-                value="yearlyType2"
-                id="yearlyType2"
-                name="yearlyType"
-                type="radio"
-                className="relative size-4 appearance-none rounded-full border border-gray-300 bg-white before:absolute before:inset-1 before:rounded-full before:bg-white checked:border-indigo-600 checked:bg-indigo-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:border-gray-300 disabled:bg-gray-100 disabled:before:bg-gray-400 forced-colors:appearance-auto forced-colors:before:hidden [&:not(:checked)]:before:hidden"
-              />
-              <label
-                htmlFor="yearlyType2"
-                className="ml-3 text-sm/6 font-medium text-gray-900 flex items-center"
-              >
-                <span>on the</span>
-                <select
-                  id="yearlyOrderNumber"
-                  name="yearlyOrderNumber"
-                  value={yearlyOrderNumber}
-                  onChange={handleYearlyOrderNumberChange}
-                  className={`mx-2 p-2 border rounded-lg ${
-                    formErrors.type ? 'border-red-500' : 'border-gray-300'
-                  }`}
-                >
-                  <option value="first">first</option>
-                  <option value="second">second</option>
-                  <option value="third">third</option>
-                  <option value="fourth">fourth</option>
-                </select>
-                <select
-                  id="yearlyWeekDay"
-                  name="yearlyWeekDay"
-                  value={yearlyWeekDay}
-                  onChange={handleYearlyWeekDayChange}
-                  className={`mx-2 p-2 border rounded-lg ${
-                    formErrors.type ? 'border-red-500' : 'border-gray-300'
-                  }`}
-                >
-                  <option value="monday">Monday</option>
-                  <option value="tuesday">Tuesday</option>
-                  <option value="wednesday">Wednesday</option>
-                  <option value="thursday">Thursday</option>
-                  <option value="friday">Friday</option>
-                  <option value="saturday">Saturday</option>
-                  <option value="sunday">Sunday</option>
-                </select>
-                <span>of</span>
-                <select
-                  id="yearlyMonth"
-                  name="yearlyMonth"
-                  value={yearlyMonth}
-                  onChange={handleYearlyMonthChange}
-                  className={`mx-2 p-2 border rounded-lg ${
-                    formErrors.type ? 'border-red-500' : 'border-gray-300'
-                  }`}
-                >
-                  <option value="january">January</option>
-                  <option value="february">February</option>
-                  <option value="march">March</option>
-                  <option value="april">April</option>
-                  <option value="may">May</option>
-                  <option value="june">June</option>
-                  <option value="july">July</option>
-                  <option value="august">August</option>
-                  <option value="september">September</option>
-                  <option value="october">October</option>
-                  <option value="november">November</option>
-                  <option value="december">December</option>
-                </select>
-              </label>
-            </div>
-            <div className="my-2">
-              at
-              <input
-                onChange={handleYearlyTimeChange}
-                value={yearlyTime}
-                type="time"
-                id="yearlyTime"
-                name="yearlyTime"
-                className={`mx-2 w-32 p-2 border rounded-lg ${
-                  formErrors.name ? 'border-red-500' : 'border-gray-300'
-                }`}
-              />
-            </div>
-          </div>
+            <Stack>
+                <TimeInput label="Time" value={yearlyTime} onChange={(e) => setYearlyTime(e.currentTarget.value)} leftSection={<IconClock size={16}/>} />
+                <Radio.Group value={yearlyType} onChange={setYearlyType} label="Pattern">
+                    <Stack mt="xs">
+                        <Radio value="yearlyType1" label={
+                            <Group gap="xs">
+                                <Text size="sm">On</Text>
+                                <DatePickerInput
+                                    placeholder="Pick date"
+                                    value={selectedYearlyDate}
+                                    onChange={(d) => handleYearlyDateChange(d as Date | null, false)}
+                                    valueFormat="D. MMMM"
+                                    w={180}
+                                    size="xs"
+                                    popoverProps={{ withinPortal: true }}
+                                />
+                            </Group>
+                        } />
+                        <Radio value="yearlyType2" label={
+                            <Group gap="xs">
+                                <Text size="sm">The</Text>
+                                <Select size="xs" w={100} data={orderNumbers} value={yearlyOrderNumber} onChange={(v) => setYearlyOrderNumber(v!)} />
+                                <Select size="xs" w={110} data={weekdays} value={yearlyWeekDay} onChange={(v) => setYearlyWeekDay(v!)} />
+                                <Text size="sm">of</Text>
+                                <Select size="xs" w={110} data={[
+                                    {value: 'january', label: 'January'}, {value: 'february', label: 'February'}, {value: 'march', label: 'March'},
+                                    {value: 'april', label: 'April'}, {value: 'may', label: 'May'}, {value: 'june', label: 'June'},
+                                    {value: 'july', label: 'July'}, {value: 'august', label: 'August'}, {value: 'september', label: 'September'},
+                                    {value: 'october', label: 'October'}, {value: 'november', label: 'November'}, {value: 'december', label: 'December'}
+                                ]} value={yearlyMonth} onChange={(v) => setYearlyMonth(v!)} />
+                            </Group>
+                        } />
+                    </Stack>
+                </Radio.Group>
+            </Stack>
         )}
 
+        {/* N-YEARLY */}
         {reminderFormData.type === 'n-yearly' && (
-          <div className="mb-4">
-            {/*<div className="my-2"></div>*/}
-            This event occurs every
-            <input
-              onChange={handleNYearlyYearsChange}
-              value={nYearlyYears}
-              type="number"
-              min="1"
-              id="nYearlyYears"
-              name="nYearlyYears"
-              className={`mx-2 w-12 p-2 border rounded-lg ${
-                formErrors.nYearlyYears ? 'border-red-500' : 'border-gray-300'
-              }`}
-            />{' '}
-            year(s)
-            <div className="flex items-center my-2">
-              <input
-                checked={nYearlyType === 'yearlyType1'}
-                onChange={handleNYearlyTypeChange}
-                value="yearlyType1"
-                id="nYearlyType1"
-                name="nYearlyType"
-                type="radio"
-                className="relative size-4 appearance-none rounded-full border border-gray-300 bg-white before:absolute before:inset-1 before:rounded-full before:bg-white checked:border-indigo-600 checked:bg-indigo-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:border-gray-300 disabled:bg-gray-100 disabled:before:bg-gray-400 forced-colors:appearance-auto forced-colors:before:hidden [&:not(:checked)]:before:hidden"
-              />
-              <label
-                htmlFor="nYearlyType1"
-                className="ml-3 text-sm/6 font-medium text-gray-900 flex items-center"
-              >
-                <span>on the</span>
-                <DatePicker
-                  selected={selectedDate}
-                  onChange={(date: Date) => {
-                    if (date) {
-                      setSelectedDate(date);
-                      setNYearlyMonth(
-                        date
-                          .toLocaleString('en-US', { month: 'long' })
-                          .toLowerCase()
-                      );
-                      setNYearlyDay(date.getDate());
-                    }
-                  }}
-                  dateFormat="d MMMM"
-                  showMonthDropdown
-                  showYearDropdown={false}
-                  className="w-32 mx-2 p-2 border rounded-lg border-gray-300"
+            <Stack>
+                <Group>
+                    <Text size="sm">Every</Text>
+                    <NumberInput w={70} value={nYearlyYears} onChange={(v) => setNYearlyYears(Number(v))} min={1} />
+                    <Text size="sm">year(s)</Text>
+                </Group>
+                <TimeInput label="Time" value={nYearlyTime} onChange={(e) => setNYearlyTime(e.currentTarget.value)} leftSection={<IconClock size={16}/>} />
+                
+                <Radio.Group value={nYearlyType} onChange={setNYearlyType} label="Pattern">
+                    <Stack mt="xs">
+                        <Radio value="yearlyType1" label={
+                            <Group gap="xs">
+                                <Text size="sm">On</Text>
+                                <DatePickerInput
+                                    placeholder="Pick date"
+                                    value={selectedNYearlyDate}
+                                    onChange={(d) => handleYearlyDateChange(d as Date | null, true)}
+                                    valueFormat="D. MMMM"
+                                    w={180}
+                                    size="xs"
+                                    popoverProps={{ withinPortal: true }}
+                                />
+                            </Group>
+                        } />
+                        <Radio value="yearlyType2" label={
+                            <Group gap="xs">
+                                <Text size="sm">The</Text>
+                                <Select size="xs" w={100} data={orderNumbers} value={nYearlyOrderNumber} onChange={(v) => setNYearlyOrderNumber(v!)} />
+                                <Select size="xs" w={110} data={weekdays} value={nYearlyWeekDay} onChange={(v) => setNYearlyWeekDay(v!)} />
+                                <Text size="sm">of</Text>
+                                <Select size="xs" w={110} data={[
+                                    {value: 'january', label: 'January'}, {value: 'february', label: 'February'}, {value: 'march', label: 'March'},
+                                    {value: 'april', label: 'April'}, {value: 'may', label: 'May'}, {value: 'june', label: 'June'},
+                                    {value: 'july', label: 'July'}, {value: 'august', label: 'August'}, {value: 'september', label: 'September'},
+                                    {value: 'october', label: 'October'}, {value: 'november', label: 'November'}, {value: 'december', label: 'December'}
+                                ]} value={nYearlyMonth} onChange={(v) => setNYearlyMonth(v!)} />
+                            </Group>
+                        } />
+                    </Stack>
+                </Radio.Group>
+            </Stack>
+        )}
+
+        {/* UNTIL DATE */}
+        {reminderFormData.type && reminderFormData.type !== 'one-time' && (
+            <Box mt="md">
+                <Checkbox 
+                    label="End repeat on specific date" 
+                    checked={hasUntilDate} 
+                    onChange={(e) => setHasUntilDate(e.currentTarget.checked)} 
                 />
-              </label>
-            </div>
-            <div className="flex items-center">
-              <input
-                checked={nYearlyType === 'yearlyType2'}
-                onChange={handleNYearlyTypeChange}
-                value="yearlyType2"
-                id="nYearlyType2"
-                name="yearlyType"
-                type="radio"
-                className="relative size-4 appearance-none rounded-full border border-gray-300 bg-white before:absolute before:inset-1 before:rounded-full before:bg-white checked:border-indigo-600 checked:bg-indigo-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:border-gray-300 disabled:bg-gray-100 disabled:before:bg-gray-400 forced-colors:appearance-auto forced-colors:before:hidden [&:not(:checked)]:before:hidden"
-              />
-              <label
-                htmlFor="nYearlyType2"
-                className="ml-3 text-sm/6 font-medium text-gray-900 flex items-center"
-              >
-                <span>on the</span>
-                <select
-                  id="nYearlyOrderNumber"
-                  name="nYearlyOrderNumber"
-                  value={nYearlyOrderNumber}
-                  onChange={handleNYearlyOrderNumberChange}
-                  className={`mx-2 p-2 border rounded-lg ${
-                    formErrors.type ? 'border-red-500' : 'border-gray-300'
-                  }`}
-                >
-                  <option value="first">first</option>
-                  <option value="second">second</option>
-                  <option value="third">third</option>
-                  <option value="fourth">fourth</option>
-                </select>
-                <select
-                  id="nYearlyWeekDay"
-                  name="nYearlyWeekDay"
-                  value={nYearlyWeekDay}
-                  onChange={handleNYearlyWeekDayChange}
-                  className={`mx-2 p-2 border rounded-lg ${
-                    formErrors.type ? 'border-red-500' : 'border-gray-300'
-                  }`}
-                >
-                  <option value="monday">Monday</option>
-                  <option value="tuesday">Tuesday</option>
-                  <option value="wednesday">Wednesday</option>
-                  <option value="thursday">Thursday</option>
-                  <option value="friday">Friday</option>
-                  <option value="saturday">Saturday</option>
-                  <option value="sunday">Sunday</option>
-                </select>
-                <span>of</span>
-                <select
-                  id="nYearlyMonth"
-                  name="nYearlyMonth"
-                  value={nYearlyMonth}
-                  onChange={handleNYearlyMonthChange}
-                  className={`mx-2 p-2 border rounded-lg ${
-                    formErrors.nYearlyMonth
-                      ? 'border-red-500'
-                      : 'border-gray-300'
-                  }`}
-                >
-                  <option value="january">January</option>
-                  <option value="february">February</option>
-                  <option value="march">March</option>
-                  <option value="april">April</option>
-                  <option value="may">May</option>
-                  <option value="june">June</option>
-                  <option value="july">July</option>
-                  <option value="august">August</option>
-                  <option value="september">September</option>
-                  <option value="october">October</option>
-                  <option value="november">November</option>
-                  <option value="december">December</option>
-                </select>
-              </label>
-            </div>
-            <div className="my-2">
-              at
-              {/*at*/}
-              <input
-                onChange={handleNYearlyTimeChange}
-                value={nYearlyTime}
-                type="time"
-                id="nYearlyTime"
-                name="nYearlyTime"
-                className={`mx-2 w-28 p-2 border rounded-lg ${
-                  formErrors.nYearlyTime ? 'border-red-500' : 'border-gray-300'
-                }`}
-              />
-            </div>
-          </div>
+                {hasUntilDate && (
+                    <DatePickerInput 
+                        mt="xs" 
+                        label="Until Date" 
+                        value={untilDate} 
+                        onChange={(d) => setUntilDate(d as Date | null)}
+                        leftSection={<IconCalendar size={18} stroke={1.5} />}
+                        valueFormat="DD.MM.YYYY"
+                    />
+                )}
+            </Box>
         )}
-      </div>
 
-      {/* Until Date */}
-      {reminderFormData.type !== 'one-time' && reminderFormData.type !== '' && (
-        <div className="mb-5">
-          <input
-            className=""
-            type="checkbox"
-            name="hasUntilDate"
-            id="hasUntilDate"
-            checked={hasUntilDate}
-            onChange={handleHasUntilDateChange}
-          />{' '}
-          <label htmlFor="hasUntilDate">
-            Run reminder until a specific date
-          </label>
-          {hasUntilDate && (
-            <div className="mt-2">
-              <label
-                className="block text-gray-700 font-medium mb-2"
-                htmlFor="untilDate"
-              >
-                Until Date
-              </label>
-              <input
-                onChange={handleUntilDateChange}
-                value={untilDate}
-                type="date"
-                id="untilDate"
-                name="untilDate"
-                className={`w-full p-2 border rounded-lg border-gray-300`}
-              />
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Warnings */}
-      <div className="mb-5">
-        <input
-          className=""
-          type="checkbox"
-          name="hasWarnings"
-          id="hasWarnings"
-          checked={reminderFormData.hasWarnings}
-          onChange={handleWarningCheckboxChange}
-        />{' '}
-        <label htmlFor="hasWarnings">Enable Warning Reminders</label>
-        {reminderFormData.hasWarnings && (
-          <div className="mb-4">
-            Additionally, before sending the final reminder, send me
-            <input
-              onChange={handleChange}
-              value={reminderFormData.warningNumber ?? undefined}
-              id="warningNumber"
-              name="warningNumber"
-              type="number"
-              className="mx-2 w-14 p-2 border rounded-lg"
-              min="1"
+        <Box>
+            <Checkbox 
+                label="Enable Warning Reminders" 
+                checked={reminderFormData.hasWarnings}
+                onChange={(e) => {
+                    const isChecked = e.currentTarget.checked;
+                    setReminderFormData(p => ({...p, hasWarnings: isChecked}));
+                }}
             />
-            reminder(s)
-            <input
-              onChange={handleChange}
-              value={reminderFormData.warningIntervalNumber ?? undefined}
-              id="warningIntervalNumber"
-              name="warningIntervalNumber"
-              type="number"
-              className="mx-2 w-14 p-2 border rounded-lg"
-              min="0"
-            />
-            <select
-              id="warningInterval"
-              name="warningInterval"
-              value={reminderFormData.warningInterval ?? undefined}
-              onChange={handleChange}
-              className={`mx-2 p-2 border rounded-lg ${
-                formErrors.warningInterval
-                  ? 'border-red-500'
-                  : 'border-gray-300'
-              }`}
-            >
-              <option></option>
-              {reminderFormData.type === 'one-time' && (
-                <>
-                  <option value="minute">Minute(s)</option>
-                  <option value="hour">Hour(s)</option>
-                  <option value="day">Day(s)</option>
-                  <option value="week">Week(s)</option>
-                  <option value="month">Month(s)</option>
-                  <option value="year">Year(s)</option>
-                </>
-              )}
-              {reminderFormData.type === 'daily' && (
-                <>
-                  <option value="minute">Minute(s)</option>
-                  <option value="hour">Hour(s)</option>
-                </>
-              )}
-              {(reminderFormData.type === 'weekly' ||
-                reminderFormData.type === 'n-weekly') && (
-                <>
-                  <option value="minute">Minute(s)</option>
-                  <option value="day">Day(s)</option>
-                  <option value="hour">Hour(s)</option>
-                </>
-              )}
-              {reminderFormData.type === 'monthly' && (
-                <>
-                  <option value="minute">Minute(s)</option>
-                  <option value="hour">Hour(s)</option>
-                  <option value="day">Day(s)</option>
-                  <option value="week">Week(s)</option>
-                </>
-              )}
-              {reminderFormData.type === 'yearly' && (
-                <>
-                  <option value="minute">Minute(s)</option>
-                  <option value="hour">Hour(s)</option>
-                  <option value="day">Day(s)</option>
-                  <option value="week">Week(s)</option>
-                  <option value="month">Month(s)</option>
-                </>
-              )}
-              {reminderFormData.type === 'n-yearly' && (
-                <>
-                  <option value="minute">Minute(s)</option>
-                  <option value="hour">Hour(s)</option>
-                  <option value="day">Day(s)</option>
-                  <option value="week">Week(s)</option>
-                  <option value="month">Month(s)</option>
-                </>
-              )}
-            </select>
-            apart.
-          </div>
-        )}
-      </div>
-      <div className="mb-4">
-        <input
-          type="checkbox"
-          name="isDisabled"
-          id="isDisabled"
-          checked={!reminderFormData.isDisabled}
-          onChange={handleIsActiveCheckboxChange}
-        />{' '}
-        <label htmlFor="isDisabled">Is active</label>
-      </div>
+            
+            {reminderFormData.hasWarnings && (
+                <Group mt="xs" align="flex-end">
+                    <NumberInput 
+                        label="Count" 
+                        w={70} 
+                        value={reminderFormData.warningNumber ?? 1} 
+                        onChange={(v) => setReminderFormData(p => ({...p, warningNumber: Number(v)}))} 
+                        min={1} 
+                    />
+                    <Text pb={8}>reminders,</Text>
+                    <NumberInput 
+                        label="Interval" 
+                        w={70} 
+                        value={reminderFormData.warningIntervalNumber ?? 1} 
+                        onChange={(v) => setReminderFormData(p => ({...p, warningIntervalNumber: Number(v)}))} 
+                        min={1} 
+                    />
+                    <Select 
+                        label="Unit"
+                        w={100}
+                        value={reminderFormData.warningInterval}
+                        onChange={(v) => handleSelectChange('warningInterval', v)}
+                        data={['minute', 'hour', 'day', 'week', 'month']}
+                    />
+                    <Text pb={8}>apart.</Text>
+                </Group>
+            )}
+        </Box>
 
-      {/* Submit Button */}
-      <Button
-        type="submit"
-        className=" disabled:bg-gray-300"
-        disabled={isSubmitting}
-      >
-        {isSubmitting
-          ? 'Sending...'
-          : isUpdate
-            ? 'Update Reminder'
-            : 'Create Reminder'}
-      </Button>
+        <Checkbox 
+            label="Set Active" 
+            checked={!reminderFormData.isDisabled}
+            onChange={(e) => {
+                const isChecked = e.currentTarget.checked;
+                setReminderFormData(p => ({...p, isDisabled: !isChecked}));
+            }}
+            mt="sm"
+        />
+
+        <Group justify="flex-end" mt="xl">
+            {onClose && <Button variant="default" onClick={onClose}>Cancel</Button>}
+            <Button type="submit" loading={isSubmitting}>
+                {isUpdate ? 'Update Reminder' : 'Create Reminder'}
+            </Button>
+        </Group>
+
+      </Stack>
     </form>
   );
-};
+}

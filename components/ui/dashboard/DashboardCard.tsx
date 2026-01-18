@@ -1,27 +1,43 @@
-import { FC } from "react";
+"use client";
 
-interface IStat {
+import { SimpleGrid, Paper, Text, Stack } from '@mantine/core';
+
+interface StatItem {
   name: string;
-  value: string;
+  value: string | number;
 }
 
-interface IDashboardCardProps {
-  stats: IStat[];
-}
+export default function DashboardCard({ stats }: { stats: StatItem[] }) {
+  if (!stats || !Array.isArray(stats)) {
+    return <Text c="dimmed">Loading statistics...</Text>;
+  }
 
-const DashboardCard: FC<IDashboardCardProps> = ({ stats }) => {
   return (
-    <div >
-      <dl className="grid grid-cols-1 gap-1 overflow-hidden rounded-2xl text-center sm:grid-cols-2 lg:grid-cols-4">
-        {stats.map((stat) => (
-          <div key={stat.name} className="flex flex-col bg-gray-400/5 p-8">
-            <dt className="text-sm/6 font-semibold text-gray-600">{stat.name}</dt>
-            <dd className="order-first text-3xl font-semibold tracking-tight text-gray-900">{stat.value}</dd>
-          </div>
-        ))}
-      </dl>
-    </div>
-  )
-}
+    <SimpleGrid cols={{ base: 1, sm: 2, md: 4 }} spacing="md">
+      {stats.map((stat) => {
+        const displayValue = typeof stat.value === 'string' 
+          ? parseInt(stat.value, 10) 
+          : Math.round(Number(stat.value));
 
-export default DashboardCard;
+        return (
+          <Paper 
+            key={stat.name} 
+            withBorder 
+            p="xl" 
+            radius="md" 
+            shadow="sm"
+          >
+            <Stack align="center" gap={5}>
+              <Text size="xl" fw={700} style={{ fontSize: '2rem' }}>
+                {isNaN(displayValue) ? 0 : displayValue}
+              </Text>
+              <Text c="dimmed" size="xs" fw={700} tt="uppercase" ta="center">
+                {stat.name}
+              </Text>
+            </Stack>
+          </Paper>
+        );
+      })}
+    </SimpleGrid>
+  );
+}

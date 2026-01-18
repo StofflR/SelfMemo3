@@ -24,6 +24,7 @@ export const CreateReminderSchema = z.object({
   warningInterval: z.string().optional().nullable(),
   warningIntervalNumber: z.number().optional().nullable(),
   timezone: z.string().optional().nullable().default("Europe/Vienna"),
+  emailTemplate: z.string().optional().default("default"),
 });
 
 
@@ -51,6 +52,7 @@ export const UpdateReminderSchema = z.object({
   warningInterval: z.string().optional().nullable(),
   warningIntervalNumber: z.number().optional().nullable(),
   timezone: z.string().optional().nullable(),
+  emailTemplate: z.string().optional().default("default"),
 });
 
 export type CreateReminderDto = z.infer<typeof CreateReminderSchema>;

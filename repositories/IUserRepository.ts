@@ -7,6 +7,8 @@ export default interface IUserRepository {
     delete(id: string): Promise<User>;
     getById(id: string): Promise<User | null>;
     getAll(): Promise<User[]>;
+    getWhere(where: any): Promise<User[]>;
     getByEmail(email: string): Promise<User | null>;
+    getByUsername(username: string): Promise<User | null>;
     updatePassword(id: string, newPassword: string): Promise<User>;
 }

@@ -1,45 +1,41 @@
-"use client"
-import { Button } from '@/components/ui/button';
+"use client";
+
 import { signOut, useSession } from "next-auth/react";
-import Image from 'next/image';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger
-} from '@/components/ui/dropdown-menu';
+import { Menu, Avatar, Text, rem } from '@mantine/core';
+import { IconLogout } from '@tabler/icons-react'; 
 
 export function User() {
-
   const { data: session } = useSession();
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button
-          variant="outline"
-          size="icon"
-          className="overflow-hidden rounded-full"
-        >
-          <Image
-            src={'/placeholder-user.jpg'}
-            width={36}
-            height={36}
-            alt="Avatar"
-            className="overflow-hidden rounded-full"
-          />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuLabel>{session?.user.email}</DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem>
-          <Button onClick={() => signOut()}>Sign Out</Button>
-        </DropdownMenuItem>
+    <Menu shadow="md" width={200} position="bottom-end">
+      <Menu.Target>
+        <Avatar 
+          radius="xl" 
+          size="md"
+          color="blue" 
+          name={session?.user?.name || undefined} 
+          style={{ cursor: 'pointer' }} 
+        />
+      </Menu.Target>
 
-      </DropdownMenuContent>
-    </DropdownMenu>
+      <Menu.Dropdown>
+        <Menu.Label>
+            <Text size="xs" fw={500} truncate>
+                {session?.user?.email}
+            </Text>
+        </Menu.Label>
+        
+        <Menu.Divider />
+
+        <Menu.Item 
+          leftSection={<IconLogout style={{ width: rem(14), height: rem(14) }} />}
+          onClick={() => signOut()}
+        >
+          Log Out
+        </Menu.Item>
+
+      </Menu.Dropdown>
+    </Menu>
   );
 }

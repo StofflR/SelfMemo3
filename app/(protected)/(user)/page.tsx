@@ -1,18 +1,18 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Box, Title } from '@mantine/core';
 import DashboardCard from '@/components/ui/dashboard/DashboardCard';
 import { StatisticService } from 'services/StatisticService';
 
 export default async function DashboardPage() {
-
-  //fetch data from api
   const dashboardStats = await StatisticService.getInstance().getDashboardStatistics();
+  
+  // DEBUG: Schau in dein Terminal, ob hier Zahlen oder undefined stehen
+  console.log("Dashboard Stats vom Server:", dashboardStats);
 
   return (
-      <Card>
-        <CardHeader>
-          <CardTitle className='mb-4'>Dashboard</CardTitle>
-          <DashboardCard stats={dashboardStats} />
-        </CardHeader>
-      </Card>
+    <Box p="xl" maw={1200}>
+      <Title order={2} mb="lg">Dashboard</Title>
+      {/* Übergabe an die Client Component */}
+      <DashboardCard stats={dashboardStats} />
+    </Box>
   );
 }

@@ -29,7 +29,8 @@ CREATE TABLE "sessions" (
 -- CreateTable
 CREATE TABLE "users" (
     "id" TEXT NOT NULL,
-    "email" TEXT NOT NULL,
+    "username" TEXT,
+    "email" TEXT,
     "password" TEXT NOT NULL,
     "firstName" TEXT,
     "lastName" TEXT,
@@ -59,6 +60,8 @@ CREATE TABLE "reminders" (
     "warningNumber" INTEGER DEFAULT 0,
     "warningInterval" TEXT,
     "warningIntervalNumber" INTEGER,
+    "timezone" TEXT DEFAULT 'Europe/Vienna',
+    "emailTemplate" TEXT NOT NULL DEFAULT 'default',
 
     CONSTRAINT "reminders_pkey" PRIMARY KEY ("id")
 );
@@ -68,6 +71,9 @@ CREATE UNIQUE INDEX "accounts_provider_provider_account_id_key" ON "accounts"("p
 
 -- CreateIndex
 CREATE UNIQUE INDEX "sessions_session_token_key" ON "sessions"("session_token");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "users_username_key" ON "users"("username");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "users_email_key" ON "users"("email");
