@@ -10,11 +10,18 @@ export async function POST(request: Request) {
 
   const reminders = await request.json();
 
+  const user = await prisma.user.findUnique({
+    where: {id: session.user.id},
+    select: {role: true}
+  })
+
+  const isAdmin = user?.role === 'admin';
+
   const imported = [];
   for (const reminder of reminders) {
     const created = await prisma.reminder.create({
       data: {
-        userId: session.user.id,
+        userId: (isAdmin && reminder.userId) ? reminder.userId : session.user.id,
         name: reminder.name,
         description: reminder.description,
         type: reminder.type,

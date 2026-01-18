@@ -12,6 +12,7 @@ import { Reminder } from '@prisma/client';
 import { useApiSwr } from 'hooks/useApiSwr';
 import { useToast } from 'hooks/useToast';
 import { useRouter } from 'next/navigation';
+import { ExportImportButtons } from '@/components/ui/reminders/ExportImportButtons';
 
 export default function RemindersPage() {
 
@@ -28,37 +29,40 @@ export default function RemindersPage() {
     };
 
     return (
-        <Card>
-            <CardHeader>
-                <div className="flex items-center justify-between">
-                    <div>
-                        <CardTitle>Reminders</CardTitle>
-                        <CardDescription>Manage all of your reminders.</CardDescription>
-                    </div>
-                    <Button onClick={() => handleCreateReminder()} >
-                        Create Reminder
-                    </Button>
-                </div>
-            </CardHeader>
-            <CardContent>
-                <DynamicList
-                    data={data || []}
-                    entity="reminders"
-                    mutateKey={url}
-                    fields={["name", "type", "isDisabled"]}
-                    combineFieldsCallbacks={{}}
-                    fieldFormatter={{
-                        isDisabled: (value) => value ? "Disabled" : "Active",
-                        type: (value) => value.charAt(0).toUpperCase() + value.slice(1)
-                    }}
-                    labelFormatter={{
-                        isDisabled: () => "Status"
-                    }}
-                    filters={false}
-                    showEditButton={true}
-                    entityButtonText="Edit"
-                />
-            </CardContent>
-        </Card>
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>Reminders</CardTitle>
+              <CardDescription>Manage all of your reminders.</CardDescription>
+            </div>
+            <div className="flex gap-2">
+              <Button onClick={() => handleCreateReminder()}>
+                Create Reminder
+              </Button>
+              <ExportImportButtons />
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <DynamicList
+            data={data || []}
+            entity="reminders"
+            mutateKey={url}
+            fields={['name', 'type', 'isDisabled']}
+            combineFieldsCallbacks={{}}
+            fieldFormatter={{
+              isDisabled: (value) => (value ? 'Disabled' : 'Active'),
+              type: (value) => value.charAt(0).toUpperCase() + value.slice(1)
+            }}
+            labelFormatter={{
+              isDisabled: () => 'Status'
+            }}
+            filters={false}
+            showEditButton={true}
+            entityButtonText="Edit"
+          />
+        </CardContent>
+      </Card>
     );
 }

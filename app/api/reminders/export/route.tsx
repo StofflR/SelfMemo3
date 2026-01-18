@@ -8,9 +8,17 @@ export async function GET() {
     return new NextResponse('Unauthorized', {status: 401});
   }
 
+  const user = await prisma.user.findUnique(
+    {
+      where: {id: session.user.id},
+      select: {role: true}
+    }
+  );
+  const isAdmin = user?.role === 'admin';
+
   const reminders = await prisma.reminder.findMany(
     {
-      where: { userId: session.user.id }
+      where: isAdmin ? {} : { userId: session.user.id }
     }
   );
 
