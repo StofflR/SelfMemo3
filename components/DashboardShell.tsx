@@ -18,6 +18,7 @@ import {
   Home,
   Users2,
   Calendar,
+  ClipboardList,
   Bell,
   Settings,
   ChevronsLeft,
@@ -55,7 +56,8 @@ export default function DashboardShell({ children, isAdmin, user }: DashboardShe
   const navItems = [
     { label: 'Dashboard', icon: Home, href: '/' },
     ...(isAdmin ? [{ label: 'Users', icon: Users2, href: '/users' }] : []),
-    { label: 'Reminders', icon: Calendar, href: '/reminders' },
+    { label: 'Reminders', icon: ClipboardList, href: '/reminders' },
+    { label: 'Calendar', icon: Calendar, href: '/calendar' },
   ];
 
   const bottomItems = [
