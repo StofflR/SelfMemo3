@@ -120,4 +120,11 @@ export class LocalUserRepository implements IUserRepository {
         this.saveData();
         return this.users[index];
     }
+
+    async searchByUsername(query: string): Promise<User[]> {
+        const lowerQuery = query.toLowerCase();
+        return this.users.filter((u) => 
+            u.username.toLowerCase().includes(lowerQuery)
+        ).slice(0, 10);
+    }
 }

@@ -159,4 +159,8 @@ export class UserService {
 
         return await this.registerUser(adminUser);
     }
+
+    async searchUsersByUsername(query: string) {
+        return await this.userRepository.searchByUsername(query);
+    }
 }

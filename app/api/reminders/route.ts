@@ -59,10 +59,20 @@ export async function POST(request: NextRequest) {
       warningInterval: requestBody.warningInterval,
       warningIntervalNumber: requestBody.warningIntervalNumber,
       timezone: requestBody.timezone,
+      additionalUserIds: requestBody.additionalUserIds,
     });
 
     const reminderService = ReminderService.getInstance();
-    await reminderService.createReminder(createReminderDto);
+    const newReminder = await reminderService.createReminder(createReminderDto);
+
+    // Check if we should send notification immediately
+    const searchParams = request.nextUrl.searchParams;
+    const notifyNow = searchParams.get("notifyNow") === "true";
+    
+    if (notifyNow) {
+      const { NotificationService } = await import("services/NotificationService");
+      await NotificationService.getInstance().sendNotification(newReminder, 'edit');
+    }
 
     return new NextResponse("Reminder created", { status: 201 });
   } catch (error: any) {
