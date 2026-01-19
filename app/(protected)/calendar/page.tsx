@@ -23,6 +23,7 @@ import {
   IconAlertTriangle,
   IconCalendar,
   IconPlus,
+  IconPencil,
 } from '@tabler/icons-react';
 
 type Reminder = {
@@ -296,7 +297,6 @@ function occurrencesForMonth(reminder: Reminder, year: number, month: number): D
 }
 
 function formatSelectedDayLabel(key: string) {
-  
   const [y, m, d] = key.split('-').map(Number);
   const date = new Date(y, (m ?? 1) - 1, d ?? 1);
   return date.toLocaleDateString('en-US', {
@@ -388,10 +388,10 @@ export default function CalendarPage() {
 
   const selectedEvents = selectedDayKey ? eventsByDay[selectedDayKey] || [] : [];
 
-  // shortcut:
   const createHref = useMemo(() => {
-    if (!selectedDayKey) return '/reminders/create';
-    return `/reminders/create?date=${encodeURIComponent(selectedDayKey)}&time=00:00`;
+    const returnTo = encodeURIComponent('/calendar');
+    if (!selectedDayKey) return `/reminders/create?returnTo=${returnTo}`;
+    return `/reminders/create?date=${encodeURIComponent(selectedDayKey)}&time=00:00&returnTo=${returnTo}`;
   }, [selectedDayKey]);
 
   return (
@@ -418,7 +418,6 @@ export default function CalendarPage() {
             Next
           </Button>
 
-         
           <Button
             variant="default"
             leftSection={<IconCalendar size={16} />}
@@ -481,12 +480,18 @@ export default function CalendarPage() {
                         {e.time ? `${e.time} ` : ''}
                         {e.title}
                       </Text>
+
                       <Group gap={6}>
                         {e.disabled ? (
                           <Badge size="xs" color="gray" variant="light">
                             disabled
                           </Badge>
-                        ) : null}
+                        ) : (
+                          <Badge size="xs" color="green" variant="light">
+                            active
+                          </Badge>
+                        )}
+
                         {e.warnings ? <IconAlertTriangle size={14} /> : null}
                       </Group>
                     </Group>
@@ -504,29 +509,21 @@ export default function CalendarPage() {
         })}
       </SimpleGrid>
 
-      <Modal
-        opened={opened}
-        onClose={() => setOpened(false)}
-        title="Reminders"
-        size="md"
-      >
+      <Modal opened={opened} onClose={() => setOpened(false)} title="Reminders" size="md">
         {selectedDayKey ? (
           <Stack>
             <Text c="dimmed" size="sm">
               {formatSelectedDayLabel(selectedDayKey)}
             </Text>
 
-            
             <Group justify="space-between" align="center">
               <Text size="sm">
-                {selectedEvents.length} reminder(s) on this day
+                {selectedEvents.length === 0
+                  ? 'No reminders on this day'
+                  : `${selectedEvents.length} reminder(s) on this day`}
               </Text>
 
-              <Button
-                component={Link}
-                href={createHref}
-                leftSection={<IconPlus size={16} />}
-              >
+              <Button component={Link} href={createHref} leftSection={<IconPlus size={16} />}>
                 Create reminder
               </Button>
             </Group>
@@ -551,7 +548,12 @@ export default function CalendarPage() {
                               <Badge color="gray" variant="light">
                                 disabled
                               </Badge>
-                            ) : null}
+                            ) : (
+                              <Badge color="green" variant="light">
+                                active
+                              </Badge>
+                            )}
+
                             {e.warnings ? (
                               <Badge color="yellow" variant="light">
                                 warnings
@@ -559,12 +561,12 @@ export default function CalendarPage() {
                             ) : null}
                           </Group>
                         </Stack>
-
                         <Button
                           component={Link}
-                          href={`/reminders/${e.reminderId}`}
+                          href={`/reminders/${e.reminderId}/edit?returnTo=${encodeURIComponent('/calendar')}`}
                           variant="light"
                           size="xs"
+                          leftSection={<IconPencil size={16} />}
                         >
                           Edit
                         </Button>

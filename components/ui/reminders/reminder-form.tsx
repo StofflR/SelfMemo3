@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from 'react';
+import React, { useCallback,useEffect, useMemo,useState } from 'react';
 import { 
   TextInput, 
   Textarea, 
@@ -17,6 +17,7 @@ import {
 import { DatePickerInput, TimeInput } from '@mantine/dates';
 import { notifications } from '@mantine/notifications';
 import { IconCalendar, IconClock } from '@tabler/icons-react'; 
+import { useRouter, useSearchParams } from "next/navigation";
 
 const tzdata = require('tzdata');
 
@@ -59,8 +60,22 @@ const defaultReminderValues: ReminderFormDataType = {
 };
 
 export default function ReminderForm({ reminder, onClose, onSuccess }: ReminderFormProps) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
   const isUpdate = !!reminder;
-  
+
+  const returnTo = useMemo(() => {
+    const rt = searchParams.get("returnTo");
+    return rt && rt.startsWith("/") ? rt : null;
+  }, [searchParams]);
+
+  const navigateBack = useCallback(() => {
+    const target = returnTo ?? "/reminders";
+    router.replace(target);
+    router.refresh();
+  }, [router, returnTo]);
+
   const [timezones, setTimezones] = useState<Array<{ value: string; label: string }>>([]);
   const [reminderFormData, setReminderFormData] = useState<ReminderFormDataType>(defaultReminderValues);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -79,8 +94,8 @@ export default function ReminderForm({ reminder, onClose, onSuccess }: ReminderF
   const [nWeeklyDate, setNWeeklyDate] = useState<Date | null>(new Date());
   const [nWeeklyTime, setNWeeklyTime] = useState<string>('00:00');
 
-  const [monthlyType, setMonthlyType] = useState<string>('monthlyType1');
-  const [monthlyTime, setMonthlyTime] = useState<string>('00:00');
+  const [monthlyType, setMonthlyType] = useState<string>("monthlyType1");
+  const [monthlyTime, setMonthlyTime] = useState<string>("00:00");
   const [monthlyDay, setMonthlyDay] = useState<number>(1);
   const [monthlyOrderNumber, setMonthlyOrderNumber] = useState<string>('first');
   const [monthlyWeekDay, setMonthlyWeekDay] = useState<string>('monday');
@@ -109,7 +124,7 @@ export default function ReminderForm({ reminder, onClose, onSuccess }: ReminderF
     if (reminder) {
       setReminderFormData(reminder as ReminderFormDataType);
       const config = JSON.parse(reminder.config);
-      const parseDate = (ts: any) => ts ? new Date(ts * 1000) : new Date();
+      const parseDate = (ts: any) => (ts ? new Date(ts * 1000) : new Date());
 
       switch (reminder.type) {
         case 'one-time':
@@ -159,9 +174,13 @@ export default function ReminderForm({ reminder, onClose, onSuccess }: ReminderF
       if (config.hasUntilDate) {
         setHasUntilDate(true);
         setUntilDate(parseDate(config.untilDate));
+      } else {
+        setHasUntilDate(false);
       }
     } else {
-        setReminderFormData(defaultReminderValues);
+      setReminderFormData(defaultReminderValues);
+      setHasUntilDate(false);
+      setUntilDate(new Date());
     }
   }, [reminder]);
 
@@ -202,7 +221,7 @@ export default function ReminderForm({ reminder, onClose, onSuccess }: ReminderF
 
   const handleYearlyDateChange = (date: Date | null, isNYearly = false) => {
     if (!date) return;
-    const monthName = date.toLocaleString('en-US', { month: 'long' }).toLowerCase();
+    const monthName = date.toLocaleString("en-US", { month: "long" }).toLowerCase();
     const day = date.getDate();
 
     if (isNYearly) {
@@ -249,8 +268,7 @@ export default function ReminderForm({ reminder, onClose, onSuccess }: ReminderF
 
   const createNewConfig = (): any => {
     const type = reminderFormData.type;
-    let newConfig: any = {};
-    
+    const newConfig: any = {};
 
     const dateToTs = (d: Date | null | string | undefined) => {
         if (!d) return 0;
@@ -306,17 +324,28 @@ export default function ReminderForm({ reminder, onClose, onSuccess }: ReminderF
     if (hasUntilDate) {
       newConfig.untilDate = dateToTs(untilDate);
     }
+
     return newConfig;
+  };
+
+  const handleCancel = () => {
+    if (onClose) {
+      onClose();
+      return;
+    }
+    navigateBack();
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
     if (!reminderFormData.name || !reminderFormData.type) {
-        notifications.show({ message: 'Name and Type are required', color: 'red' });
-        return;
+      notifications.show({ message: "Name and Type are required", color: "red" });
+      return;
     }
 
     setIsSubmitting(true);
+
     try {
       const configObj = createNewConfig();
       const payload = {
@@ -324,16 +353,16 @@ export default function ReminderForm({ reminder, onClose, onSuccess }: ReminderF
         config: JSON.stringify(configObj),
       };
 
-      const url = isUpdate ? `/api/reminders/${reminderFormData.id}` : '/api/reminders';
-      const method = isUpdate ? 'PUT' : 'POST';
+      const url = isUpdate ? `/api/reminders/${reminderFormData.id}` : "/api/reminders";
+      const method = isUpdate ? "PUT" : "POST";
 
       const res = await fetch(url, {
         method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
       });
 
-      if (!res.ok) throw new Error('Failed to save');
+      if (!res.ok) throw new Error("Failed to save");
 
       notifications.show({ 
         title: isUpdate ? 'Updated' : 'Created', 
@@ -341,9 +370,12 @@ export default function ReminderForm({ reminder, onClose, onSuccess }: ReminderF
         color: 'green' 
       });
 
-      if (onSuccess) onSuccess();
-      if (onClose) onClose();
+      if (onSuccess) {
+        onSuccess();
+        return;
+      }
 
+      navigateBack();
     } catch (error: any) {
       notifications.show({ title: 'Error', message: error.message, color: 'red' });
     } finally {
@@ -439,24 +471,32 @@ export default function ReminderForm({ reminder, onClose, onSuccess }: ReminderF
             </Group>
         )}
 
-        {reminderFormData.type === 'daily' && (
-            <Stack>
-                <TimeInput label="Time" value={dailyTime} onChange={(e) => setDailyTime(e.currentTarget.value)} leftSection={<IconClock size={16}/>} />
-                <Text size="sm" fw={500}>Repeat on:</Text>
-                <Group gap="xs">
-                  {Object.keys(days).map((day) => (
-                    <Checkbox 
-                        key={day}
-                        label={day.substring(0,3).toUpperCase()}
-                        checked={(days as any)[day]}
-                        onChange={(e) => {
-                            const isChecked = e.currentTarget.checked;
-                            setDays(p => ({ ...p, [day]: isChecked }));
-                        }}
-                    />
-                    ))}
-                </Group>
-            </Stack>
+        {/* DAILY */}
+        {reminderFormData.type === "daily" && (
+          <Stack>
+            <TimeInput
+              label="Time"
+              value={dailyTime}
+              onChange={(e) => setDailyTime(e.currentTarget.value)}
+              leftSection={<IconClock size={16} />}
+            />
+            <Text size="sm" fw={500}>
+              Repeat on:
+            </Text>
+            <Group gap="xs">
+              {Object.keys(days).map((day) => (
+                <Checkbox
+                  key={day}
+                  label={day.substring(0, 3).toUpperCase()}
+                  checked={(days as any)[day]}
+                  onChange={(e) => {
+                    const isChecked = e.currentTarget.checked;
+                    setDays((p) => ({ ...p, [day]: isChecked }));
+                  }}
+                />
+              ))}
+            </Group>
+          </Stack>
         )}
 
         {reminderFormData.type === 'weekly' && (
@@ -662,12 +702,14 @@ export default function ReminderForm({ reminder, onClose, onSuccess }: ReminderF
         />
 
         <Group justify="flex-end" mt="xl">
-            {onClose && <Button variant="default" onClick={onClose}>Cancel</Button>}
-            <Button type="submit" loading={isSubmitting}>
-                {isUpdate ? 'Update Reminder' : 'Create Reminder'}
-            </Button>
-        </Group>
+          <Button variant="default" onClick={handleCancel} disabled={isSubmitting}>
+            Cancel
+          </Button>
 
+          <Button type="submit" loading={isSubmitting}>
+            {isUpdate ? "Update Reminder" : "Create Reminder"}
+          </Button>
+        </Group>
       </Stack>
     </form>
   );

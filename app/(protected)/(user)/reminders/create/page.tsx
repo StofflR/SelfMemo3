@@ -1,25 +1,33 @@
 "use client";
 
-import { useRouter } from 'next/navigation';
-import { Box, Title, Paper } from '@mantine/core';
-import ReminderForm from '@/components/ui/reminders/reminder-form'; 
+import { useMemo } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Box, Paper, Title } from "@mantine/core";
+import ReminderForm from "@/components/ui/reminders/reminder-form";
 
-export default function RemindersCreatePage() {
-    const router = useRouter();
+export default function CreateReminderPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
 
-    const handleRedirect = () => {
-        router.push('/reminders');
-    };
+  const returnTo = useMemo(() => {
+    const rt = searchParams.get("returnTo");
+    return rt && rt.startsWith("/") ? rt : null;
+  }, [searchParams]);
 
-    return (
-        <Box p="xl" maw={1200}>
-            <Title order={2} mb="lg">Create New Reminder</Title>
-            <Paper withBorder shadow="sm" radius="md" p="xl">
-                <ReminderForm 
-                    onSuccess={handleRedirect}
-                    onClose={handleRedirect}
-                />
-            </Paper>
-        </Box>
-    );
+  const goBack = () => {
+    router.replace(returnTo ?? "/reminders");
+    router.refresh();
+  };
+
+  return (
+    <Box p="xl" maw={1200}>
+      <Title order={2} mb="lg">
+        Create Reminder
+      </Title>
+
+      <Paper withBorder shadow="sm" radius="md" p="md">
+        <ReminderForm onSuccess={goBack} onClose={goBack} />
+      </Paper>
+    </Box>
+  );
 }
