@@ -1,3 +1,5 @@
+import "server-only";
+
 import { Reminder } from "@prisma/client";
 import IReminderRepository from "./IReminderRepository";
 import { CreateReminderDto, UpdateReminderDto } from "@/lib/validations/reminder";

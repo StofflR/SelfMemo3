@@ -36,10 +36,10 @@ interface DashboardShellProps {
   isAdmin: boolean;
   user: {
     id: string;
-    name?: string | null;
-    email?: string | null;
-    image?: string | null;
-    role?: string; 
+    name?: string | undefined;
+    email?: string | undefined;
+    image?: string | undefined;
+    role?: string | undefined; 
   };
 }
 

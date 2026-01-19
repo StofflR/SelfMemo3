@@ -37,7 +37,8 @@
       "body": "Hello {{firstName}} {{lastName}},\n\nYou have an upcoming meeting: {{description}}\n\nBest regards,\nYour Reminder App"
     },
     "edit": {
-      "subject": "Meeting Updated: {{reminderName}}"
+      "subject": "Meeting Updated: {{reminderName}}",
+      "body": "Hello {{firstName}} {{lastName}},\n\nYour meeting has been updated: {{description}}\n\nNext notification: {{nextdate}}\n\nBest regards,\nYour Reminder App"
     }
   },
   "task": {

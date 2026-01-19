@@ -28,8 +28,8 @@ interface INFUserSettingsFormProps {
 const UserSettingsForm: FC<INFUserSettingsFormProps> = ({ user }) => {
     const [updateUser, setUpdateUser] = useState<UpdateUserDto>({ 
         id: user.id,
-        username: user.username,
-        email: user.email,
+        username: user.username || undefined,
+        email: user.email || undefined,
         firstName: user.firstName,
         lastName: user.lastName,
         role: user.role as "user" | "admin"

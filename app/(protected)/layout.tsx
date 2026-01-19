@@ -10,12 +10,12 @@ export default async function DashboardLayout({
 }) {
   const user = await getCurrentUser();
 
-  if (!user) redirect("/login");
+  if (!user || !user.id) redirect("/login");
   const isAdmin = user.role === "admin";
 
   return (
     <Providers>
-      <DashboardShell isAdmin={isAdmin} user={user}>
+      <DashboardShell isAdmin={isAdmin} user={user as any}>
         {children}
       </DashboardShell>
     </Providers>

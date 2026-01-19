@@ -99,7 +99,6 @@ export default function UsersPage() {
                 <DynamicList
                     data={data || []}
                     entity="users"
-                    mutateKey={url}
                     fields={["username", "email", "firstName", "lastName", "role"]}
                     fieldFormatter={{
                         role: (role) => role ? role.charAt(0).toUpperCase() + role.slice(1) : '',
@@ -108,7 +107,6 @@ export default function UsersPage() {
                         firstName: () => "First Name",
                         lastName: () => "Last Name",
                     }}
-                    filters={false}
 
                     showEditButton={true}
                     onEdit={handleEditClick} 

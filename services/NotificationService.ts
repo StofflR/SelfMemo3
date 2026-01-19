@@ -60,7 +60,7 @@ export class NotificationService {
     
     if (primaryUser) {
       usersToNotify.push({
-        email: primaryUser.email,
+        email: primaryUser.email || '',
         firstName: primaryUser.firstName || '',
         lastName: primaryUser.lastName || '',
       });
@@ -78,7 +78,7 @@ export class NotificationService {
           const user = await userService.getUserById(userId);
           if (user) {
             usersToNotify.push({
-              email: user.email,
+              email: user.email || '',
               firstName: user.firstName || '',
               lastName: user.lastName || '',
             });

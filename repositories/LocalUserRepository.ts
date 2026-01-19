@@ -1,3 +1,5 @@
+import "server-only";
+
 import { User } from "@prisma/client";
 import IUserRepository from "./IUserRepository";
 import { CreateUserDto, UpdateUserDto } from "@/lib/validations/user";
@@ -47,8 +49,8 @@ export class LocalUserRepository implements IUserRepository {
     async create(user: CreateUserDto): Promise<User> {
         const newUser: User = {
             id: this.generateId(),
-            username: user.username,
-            email: user.email,
+            username: user.username || null,
+            email: user.email || null,
             password: user.password,
             firstName: user.firstName || null,
             lastName: user.lastName || null,
@@ -124,7 +126,7 @@ export class LocalUserRepository implements IUserRepository {
     async searchByUsername(query: string): Promise<User[]> {
         const lowerQuery = query.toLowerCase();
         return this.users.filter((u) => 
-            u.username.toLowerCase().includes(lowerQuery)
+            u?.username?.toLowerCase().includes(lowerQuery)
         ).slice(0, 10);
     }
 }

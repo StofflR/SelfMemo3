@@ -93,7 +93,6 @@ export default function RemindersPage() {
           <DynamicList
             data={data || []}
             entity="reminders"
-            mutateKey={url}
             fields={['name', 'type', 'isDisabled']}
             fieldFormatter={{
               isDisabled: (value) =>
@@ -111,7 +110,6 @@ export default function RemindersPage() {
             labelFormatter={{
               isDisabled: () => 'Status'
             }}
-            filters={false}
             showEditButton={true}
             onEdit={handleEditReminder}
             entityButtonText="Edit"
