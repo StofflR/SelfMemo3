@@ -7,6 +7,10 @@
     "warning": {
       "subject": "SelfMemo Warning-Reminder: {{reminderName}}",
       "body": "Hello {{firstName}} {{lastName}},\n\nThis is a warning reminder.  {{description}}\n\nBest regards,\nYour Reminder App"
+    },
+    "edit": {
+      "subject": "SelfMemo Updated: {{reminderName}}",
+      "body": "Hello {{firstName}} {{lastName}},\n\nYour reminder has been updated. {{description}}\n\nNext notification: {{nextdate}}\n\nBest regards,\nYour Reminder App"
     }
   },
   "birthday": {
@@ -17,6 +21,10 @@
     "warning": {
       "subject": "Upcoming Birthday: {{reminderName}}",
       "body": "Hello {{firstName}} {{lastName}},\n\nReminder: {{description}} is coming up soon!\n\nBest regards,\nYour Reminder App"
+    },
+    "edit": {
+      "subject": "Birthday Reminder Updated: {{reminderName}}",
+      "body": "Hello {{firstName}} {{lastName}},\n\nYour birthday reminder has been updated: {{description}}\n\nNext notification: {{nextdate}}\n\nBest regards,\nYour Reminder App"
     }
   },
   "meeting": {
@@ -27,6 +35,10 @@
     "warning": {
       "subject": "Upcoming Meeting: {{reminderName}}",
       "body": "Hello {{firstName}} {{lastName}},\n\nYou have an upcoming meeting: {{description}}\n\nBest regards,\nYour Reminder App"
+    },
+    "edit": {
+      "subject": "Meeting Updated: {{reminderName}}",
+      "body": "Hello {{firstName}} {{lastName}},\n\nYour meeting has been updated: {{description}}\n\nNext notification: {{nextdate}}\n\nBest regards,\nYour Reminder App"
     }
   },
   "task": {
@@ -37,6 +49,10 @@
     "warning": {
       "subject": "Task Deadline Approaching: {{reminderName}}",
       "body": "Hello {{firstName}} {{lastName}},\n\nYour task deadline is approaching: {{description}}\n\nBest regards,\nYour Reminder App"
+    },
+    "edit": {
+      "subject": "Task Updated: {{reminderName}}",
+      "body": "Hello {{firstName}} {{lastName}},\n\nYour task has been updated: {{description}}\n\nNext notification: {{nextdate}}\n\nBest regards,\nYour Reminder App"
     }
   }
 }

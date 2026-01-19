@@ -1,6 +1,7 @@
 import { auth } from '@/lib/auth';
-import { prisma } from '@/lib/db';
 import { NextResponse } from 'next/server';
+import { ReminderService } from 'services/ReminderService';
+import { UserService } from 'services/UserService';
 
 export async function GET() {
   const session = await auth();
@@ -8,19 +9,15 @@ export async function GET() {
     return new NextResponse('Unauthorized', {status: 401});
   }
 
-  const user = await prisma.user.findUnique(
-    {
-      where: {id: session.user.id},
-      select: {role: true}
-    }
-  );
+  const userService = UserService.getInstance();
+  const reminderService = ReminderService.getInstance();
+
+  const user = await userService.getUserById(session.user.id);
   const isAdmin = user?.role === 'admin';
 
-  const reminders = await prisma.reminder.findMany(
-    {
-      where: isAdmin ? {} : { userId: session.user.id }
-    }
-  );
+  const reminders = isAdmin 
+    ? await reminderService.getAll()
+    : await reminderService.getAllByUserId(session.user.id);
 
   const jsonData = JSON.stringify(reminders, null, 2);
 

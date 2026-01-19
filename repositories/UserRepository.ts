@@ -77,4 +77,16 @@ export class UserRepository extends BaseRepository implements IUserRepository {
         });
     }
 
+    async searchByUsername(query: string): Promise<User[]> {
+        return await this.prisma.user.findMany({
+            where: {
+                username: {
+                    contains: query,
+                    mode: 'insensitive',
+                },
+            },
+            take: 10,
+        });
+    }
+
 }

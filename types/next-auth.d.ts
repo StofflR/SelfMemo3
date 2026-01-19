@@ -3,6 +3,7 @@ import { User } from "next-auth";
 import { JWT } from "next-auth/jwt";
 
 export type ExtendedUser = User & {
+  id: string;
   role: UserRole; 
 };
 

@@ -2,7 +2,6 @@
 
 import { Paper, Title, Text, Container, Stack } from '@mantine/core';
 import UserForm from '@/components/ui/users/users-form';
-import { UserService } from 'services/UserService';
 import { useEffect, useState } from 'react';
 
 type Params = Promise<{
@@ -15,8 +14,11 @@ export default function UserEditPage({ params }: { params: Params }) {
 
     useEffect(() => {
         params.then(async (p) => {
-            const fetchedUser = await UserService.getInstance().getUserById(p.id);
-            setUser(fetchedUser);
+            const response = await fetch(`/api/users/${p.id}`);
+            if (response.ok) {
+                const fetchedUser = await response.json();
+                setUser(fetchedUser);
+            }
             setLoading(false);
         });
     }, [params]);

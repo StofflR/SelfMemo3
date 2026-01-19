@@ -3,7 +3,7 @@
 import { useToast } from '../../../hooks/useToast';
 import { useRouter } from 'next/navigation';
 import { useRef } from 'react';
-import { Button } from '@/components/ui/button';
+import { Button } from '@mantine/core';
 
 export function ExportImportButtons() {
   const toast = useToast();
@@ -30,7 +30,7 @@ export function ExportImportButtons() {
 
   const handleImportJSON = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if(!file) return;
+    if (!file) return;
 
     try {
       const text = await file.text();
@@ -38,11 +38,11 @@ export function ExportImportButtons() {
 
       const response = await fetch('/api/reminders/import', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json'},
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(reminders)
       });
 
-      if(response.ok) {
+      if (response.ok) {
         const result = await response.json();
         toast.success('Import successful', `Imported ${result.count} reminders`);
         router.refresh();
@@ -59,19 +59,20 @@ export function ExportImportButtons() {
     }
   };
   return (
-    <div className="flex gap-2">
-      <Button onClick={handleExportJSON} variant="outline">
+    <>
+      <Button onClick={handleExportJSON} variant="default">
         Export JSON
       </Button>
-      <Button onClick={() => fileInputRef.current?.click()} variant="outline">
+      <Button onClick={() => fileInputRef.current?.click()} variant="default">
         Import JSON
       </Button>
       <input
         ref={fileInputRef}
-      type="file"
-      accept=".json"
-      onChange={handleImportJSON}
-      className="hidden"/>
-    </div>
+        type="file"
+        accept=".json"
+        onChange={handleImportJSON}
+        style={{ display: 'none' }}
+      />
+    </>
   );
 }

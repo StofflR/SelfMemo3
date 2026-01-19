@@ -11,4 +11,5 @@ export default interface IUserRepository {
     getByEmail(email: string): Promise<User | null>;
     getByUsername(username: string): Promise<User | null>;
     updatePassword(id: string, newPassword: string): Promise<User>;
+    searchByUsername(query: string): Promise<User[]>;
 }

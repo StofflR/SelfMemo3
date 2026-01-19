@@ -24,6 +24,18 @@ export async function PUT(request: NextRequest) {
     const reminderService = ReminderService.getInstance();
     await reminderService.updateReminder(updateReminderDto);
 
+    // Check if we should send notification immediately
+    const searchParams = request.nextUrl.searchParams;
+    const notifyNow = searchParams.get("notifyNow") === "true";
+    
+    if (notifyNow) {
+      const updatedReminder = await reminderService.getById(updateReminderDto.id);
+      if (updatedReminder) {
+        const { NotificationService } = await import("services/NotificationService");
+        await NotificationService.getInstance().sendNotification(updatedReminder, 'edit');
+      }
+    }
+
     return new Response("Reminder updated", { status: 200 });
   } catch (error: any) {
     console.error(error);
