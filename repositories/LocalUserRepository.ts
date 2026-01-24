@@ -55,6 +55,8 @@ export class LocalUserRepository implements IUserRepository {
             firstName: user.firstName || null,
             lastName: user.lastName || null,
             role: user.role,
+            defaultTimezone: "Etc/GMT",
+            dateFormat: "full",
         };
         this.users.push(newUser);
         this.saveData();
@@ -125,7 +127,7 @@ export class LocalUserRepository implements IUserRepository {
 
     async searchByUsername(query: string): Promise<User[]> {
         const lowerQuery = query.toLowerCase();
-        return this.users.filter((u) => 
+        return this.users.filter((u) =>
             u?.username?.toLowerCase().includes(lowerQuery)
         ).slice(0, 10);
     }

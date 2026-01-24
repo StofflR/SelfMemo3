@@ -50,11 +50,7 @@ export class UserRepository extends BaseRepository implements IUserRepository {
         return await this.prisma.user.findUnique({
             where: {
                 email: email,
-            },/*
-            select: {
-                name: true,
-                emailVerified: true,
-            },*/
+            }
         });
     }
 

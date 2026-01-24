@@ -33,7 +33,7 @@ export const POST = async (request: NextRequest) => {
         }
 
         const requestBody = await request.json();
-        const { username, email, password, role, firstName, lastName } = requestBody;
+        const { username, email, password, role, firstName, lastName, defaultTimezone, dateFormat } = requestBody;
 
         const createUserDto: CreateUserDto = CreateUserSchema.parse({
             username,
@@ -42,12 +42,14 @@ export const POST = async (request: NextRequest) => {
             role,
             firstName,
             lastName,
+            defaultTimezone,
+            dateFormat,
         });
 
         //Role = Admin => username required
         if (createUserDto.role === 'admin' && (!createUserDto.username || createUserDto.username.length < 3)) {
             return new NextResponse(
-                JSON.stringify({ message: "Admins require a username (min. 3 characters)" }), 
+                JSON.stringify({ message: "Admins require a username (min. 3 characters)" }),
                 { status: 400 }
             );
         }
@@ -55,7 +57,7 @@ export const POST = async (request: NextRequest) => {
         //Role = User => email required
         if (createUserDto.role === 'user' && !createUserDto.email) {
             return new NextResponse(
-                JSON.stringify({ message: "Users require a valid email address" }), 
+                JSON.stringify({ message: "Users require a valid email address" }),
                 { status: 400 }
             );
         }

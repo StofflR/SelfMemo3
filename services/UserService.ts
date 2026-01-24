@@ -123,22 +123,22 @@ export class UserService {
 
     async updatePassword(updateUserPasswordDto: UpdateUserPasswordDto) {
         const user = await this.getUserById(updateUserPasswordDto.id);
-    
+
         if (!user) {
             throw new Error('User not found');
         }
-    
+
         const isPasswordValid = await bcrypt.compare(
-            updateUserPasswordDto.currentPassword, 
+            updateUserPasswordDto.currentPassword,
             user.password
         );
-    
+
         if (!isPasswordValid) {
             throw new Error('Current password is incorrect');
         }
-    
+
         const hashedPassword = await bcrypt.hash(updateUserPasswordDto.newPassword, 10);
-    
+
         return await this.userRepository.updatePassword(updateUserPasswordDto.id, hashedPassword);
     }
 
@@ -155,6 +155,8 @@ export class UserService {
             email: process.env.ADMIN_EMAIL,
             password: process.env.ADMIN_PASSWORD,
             role: 'admin',
+            defaultTimezone: 'Etc/GMT',
+            dateFormat: 'full',
         };
 
         return await this.registerUser(adminUser);
