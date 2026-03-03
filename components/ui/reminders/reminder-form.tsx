@@ -173,7 +173,13 @@ export default function ReminderForm({ reminder, onClose, onSuccess }: ReminderF
           setYearlyOrderNumber(config.orderNumber || 'first');
           setYearlyWeekDay(config.weekDay || 'monday');
           setYearlyTime(config.time || '00:00');
-          setSelectedYearlyDate(new Date());
+          if (config.month && config.day) {
+            const monthIndex = new Date(`${config.month} 1, 2000`).getMonth();
+            const restored = new Date(new Date().getFullYear(), monthIndex, config.day);
+            setSelectedYearlyDate(restored);
+          } else {
+            setSelectedYearlyDate(new Date());
+          }
           break;
         case 'n-yearly':
           setNYearlyYears(config.years || 1);
@@ -183,7 +189,13 @@ export default function ReminderForm({ reminder, onClose, onSuccess }: ReminderF
           setNYearlyOrderNumber(config.orderNumber || 'first');
           setNYearlyWeekDay(config.weekDay || 'monday');
           setNYearlyTime(config.time || '00:00');
-          setSelectedNYearlyDate(new Date());
+          if (config.month && config.day) {
+            const monthIndex = new Date(`${config.month} 1, 2000`).getMonth();
+            const restored = new Date(new Date().getFullYear(), monthIndex, config.day);
+            setSelectedNYearlyDate(restored);
+          } else {
+            setSelectedNYearlyDate(new Date());
+          }
           break;
       }
 
@@ -329,15 +341,19 @@ export default function ReminderForm({ reminder, onClose, onSuccess }: ReminderF
 
   const handleYearlyDateChange = (date: Date | null, isNYearly = false) => {
     if (!date) return;
-    const monthName = date.toLocaleString("en-US", { month: "long" }).toLowerCase();
-    const day = date.getDate();
+  
+    const dateObj = typeof date === 'string' ? new Date(date) : date;
+    if (isNaN(dateObj.getTime())) return;
+
+    const monthName = dateObj.toLocaleString("en-US", { month: "long" }).toLowerCase();
+    const day = dateObj.getDate();
 
     if (isNYearly) {
-      setSelectedNYearlyDate(date);
+      setSelectedNYearlyDate(dateObj);
       setNYearlyMonth(monthName);
       setNYearlyDay(day);
     } else {
-      setSelectedYearlyDate(date);
+      setSelectedYearlyDate(dateObj);
       setYearlyMonth(monthName);
       setYearlyDay(day);
     }
