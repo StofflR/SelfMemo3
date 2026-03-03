@@ -1,23 +1,23 @@
 "use client";
 
 import axios from 'axios';
-import React, { useCallback,useEffect, useMemo,useState } from 'react';
-import { 
-  TextInput, 
-  Textarea, 
-  Select, 
-  NumberInput, 
-  Checkbox, 
-  Button, 
-  Group, 
-  Stack, 
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import {
+  TextInput,
+  Textarea,
+  Select,
+  NumberInput,
+  Checkbox,
+  Button,
+  Group,
+  Stack,
   Text,
   Radio,
   Box
 } from '@mantine/core';
 import { DatePickerInput, TimeInput } from '@mantine/dates';
 import { notifications } from '@mantine/notifications';
-import { IconCalendar, IconClock } from '@tabler/icons-react'; 
+import { IconCalendar, IconClock } from '@tabler/icons-react';
 import { useRouter, useSearchParams } from "next/navigation";
 
 const tzdata = require('tzdata');
@@ -82,6 +82,8 @@ export default function ReminderForm({ reminder, onClose, onSuccess }: ReminderF
   const [timezones, setTimezones] = useState<Array<{ value: string; label: string }>>([]);
   const [reminderFormData, setReminderFormData] = useState<ReminderFormDataType>(defaultReminderValues);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [userDefaultTimezone, setUserDefaultTimezone] = useState<string>('Etc/GMT');
+  const [userDefaultEmailTemplate, setUserDefaultEmailTemplate] = useState<string>('default');
 
   const [oneTimeTimestamp, setOneTimeTimestamp] = useState<Date | null>(new Date());
 
@@ -247,7 +249,7 @@ export default function ReminderForm({ reminder, onClose, onSuccess }: ReminderF
     }
   }, [reminder]);
 
-  // Load timezones
+  // Load timezones and user's default timezone
   useEffect(() => {
     const list = Object.keys(tzdata.zones)
       .filter(name => name.startsWith('Etc/GMT'))
@@ -258,7 +260,32 @@ export default function ReminderForm({ reminder, onClose, onSuccess }: ReminderF
         label: name.replace('Etc/', '').replace(/_/g, ' ')
       }));
     setTimezones(list);
-  }, []);
+
+    // Fetch user's default timezone
+    const fetchUserTimezone = async () => {
+      try {
+        const response = await fetch('/api/users/me');
+        if (response.ok) {
+          const userData = await response.json();
+          if (userData.defaultTimezone) {
+            setUserDefaultTimezone(userData.defaultTimezone);
+            // Set default timezone for new reminders only
+            if (!reminder) {
+              setReminderFormData(prev => ({
+                ...prev,
+                timezone: userData.defaultTimezone,
+                emailTemplate: prev.emailTemplate || 'default'
+              }));
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching user timezone:', error);
+      }
+    };
+
+    fetchUserTimezone();
+  }, [reminder]);
 
   // Load email templates
   useEffect(() => {

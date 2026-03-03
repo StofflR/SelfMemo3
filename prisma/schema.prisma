@@ -42,16 +42,18 @@ model Session {
 }
 
 model User {
-  id        String     @id @default(cuid())
-  username  String?     @unique
-  email     String?     @unique
-  password  String
-  firstName String?
-  lastName  String?
-  role      String
-  accounts  Account[]
-  sessions  Session[]
-  Reminder  Reminder[]
+  id              String     @id @default(cuid())
+  username        String?     @unique
+  email           String?     @unique
+  password        String
+  firstName       String?
+  lastName        String?
+  role            String
+  defaultTimezone String?    @default("Etc/GMT")
+  dateFormat      String?    @default("full")
+  accounts        Account[]
+  sessions        Session[]
+  Reminder        Reminder[]
 
   @@map("users")
 }

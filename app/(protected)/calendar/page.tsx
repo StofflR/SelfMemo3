@@ -353,6 +353,12 @@ export default function CalendarPage() {
 
       for (const d of dates) {
         const key = dayKey(d);
+        
+        const time = 
+          typeof cfg?.time === 'string' && cfg.time.length > 0
+          ? cfg.time 
+          : `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+          
         if (!map[key]) map[key] = [];
         map[key].push({
           id: `${r.id}-${d.getTime()}`,
@@ -455,7 +461,8 @@ export default function CalendarPage() {
               p="xs"
               mih={110}
               radius="md"
-              style={{ cursor: 'pointer' }}
+              /*{style={{ cursor: 'pointer' }}}*/
+              style={{ cursor: 'pointer', borderWidth:4 }}
               onClick={() => {
                 setSelectedDayKey(k);
                 setOpened(true);

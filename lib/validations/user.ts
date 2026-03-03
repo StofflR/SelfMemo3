@@ -2,20 +2,20 @@ import * as z from "zod";
 
 
 export const CreateUserSchema = z.object({
-  //username: z.string().min(3).max(50),
-  //email: z.string().email(),
   username: z.string().min(3).max(50).optional().or(z.literal("")),
   email: z.string().email().optional().or(z.literal("")),
   password: z.string().min(6),
   role: z.enum(["admin", "user"]),
-  //firstName: z.string().nullable(),
-  //lastName: z.string().nullable()
   firstName: z.string().nullable().optional().or(z.literal("")),
-  lastName: z.string().nullable().optional().or(z.literal(""))
+  lastName: z.string().nullable().optional().or(z.literal("")),
+  defaultTimezone: z.string().optional(),
+  dateFormat: z.string().optional()
 })
 
 export const UpdateUserSchema = CreateUserSchema.omit({ password: true }).extend({
-  id: z.string()
+  id: z.string(),
+  defaultTimezone: z.string().optional(),
+  dateFormat: z.string().optional()
 })
 
 export const UpdateUserPasswordSchema = z.object({

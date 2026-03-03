@@ -1,22 +1,23 @@
 "use client";
 
-import { FC, useState } from 'react';
+import { FC, useState, useEffect } from 'react';
 import { User } from '@prisma/client';
-import { 
-  TextInput, 
-  PasswordInput, 
-  Button, 
-  Group, 
-  Title, 
-  Text, 
-  Grid, 
-  Stack, 
-  Divider, 
-  Paper,
-  Alert 
+import {
+    TextInput,
+    PasswordInput,
+    Button,
+    Group,
+    Title,
+    Text,
+    Grid,
+    Stack,
+    Divider,
+    Paper,
+    Alert,
+    Select
 } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
-import { IconInfoCircle } from '@tabler/icons-react'; 
+import { IconInfoCircle } from '@tabler/icons-react';
 import { UpdateUserDto, UpdateUserPasswordDto } from '@/lib/validations/user';
 
 type INFUpdateUserPasswordDto = Omit<UpdateUserPasswordDto, 'id'>;
@@ -26,23 +27,43 @@ interface INFUserSettingsFormProps {
 }
 
 const UserSettingsForm: FC<INFUserSettingsFormProps> = ({ user }) => {
-    const [updateUser, setUpdateUser] = useState<UpdateUserDto>({ 
+    const [updateUser, setUpdateUser] = useState<UpdateUserDto>({
         id: user.id,
         username: user.username || undefined,
         email: user.email || undefined,
         firstName: user.firstName,
         lastName: user.lastName,
-        role: user.role as "user" | "admin"
+        role: user.role as "user" | "admin",
+        defaultTimezone: (user as any).defaultTimezone || 'Etc/GMT',
+        dateFormat: (user as any).dateFormat || 'full'
     });
     const [loadingProfile, setLoadingProfile] = useState(false);
+    const [timezones, setTimezones] = useState<Array<{ value: string; label: string }>>([]);
 
     const [updateUserPassword, setUpdateUserPassword] = useState<INFUpdateUserPasswordDto>({ currentPassword: '', newPassword: '' });
     const [secondUserPassword, setSecondUserPassword] = useState<string>('');
     const [passwordError, setPasswordError] = useState<string | null>(null);
     const [loadingPassword, setLoadingPassword] = useState(false);
 
+    useEffect(() => {
+        const tzdata = require('tzdata');
+        const list = Object.keys(tzdata.zones)
+            .filter(name => name.startsWith('Etc/GMT'))
+            .filter(name => !['Etc/GMT0', 'Etc/GMT-0', 'Etc/GMT+0'].includes(name))
+            .sort()
+            .map(name => ({
+                value: name,
+                label: name.replace('Etc/', '').replace(/_/g, ' ')
+            }));
+        setTimezones(list);
+    }, []);
+
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.currentTarget;
+        setUpdateUser((prev) => ({ ...prev, [name]: value }));
+    }
+
+    const handleSelectChange = (name: string, value: string | null) => {
         setUpdateUser((prev) => ({ ...prev, [name]: value }));
     }
 
@@ -108,7 +129,7 @@ const UserSettingsForm: FC<INFUserSettingsFormProps> = ({ user }) => {
     const onSubmitPassword = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!validatePassword()) return;
-        
+
         setLoadingPassword(true);
 
         try {
@@ -174,7 +195,7 @@ const UserSettingsForm: FC<INFUserSettingsFormProps> = ({ user }) => {
                                         autoComplete="off"
                                     />
                                 </Group>
-                                
+
                                 <TextInput
                                     label="Username"
                                     name="username"
@@ -190,6 +211,28 @@ const UserSettingsForm: FC<INFUserSettingsFormProps> = ({ user }) => {
                                     value={updateUser.email || ''}
                                     onChange={handleChange}
                                     autoComplete="off"
+                                />
+
+                                <Select
+                                    label="Default Timezone"
+                                    description="This timezone will be used as default when creating new reminders"
+                                    data={timezones}
+                                    value={updateUser.defaultTimezone}
+                                    onChange={(val) => handleSelectChange('defaultTimezone', val)}
+                                    searchable
+                                />
+
+                                <Select
+                                    label="Date Format"
+                                    description="This format will be used for displaying dates in email notifications"
+                                    data={[
+                                        { value: 'full', label: 'Full (Friday, January 24, 2026 at 3:30 PM)' },
+                                        { value: 'long', label: 'Long (January 24, 2026 at 3:30 PM)' },
+                                        { value: 'medium', label: 'Medium (Jan 24, 2026, 3:30 PM)' },
+                                        { value: 'short', label: 'Short (1/24/26, 3:30 PM)' }
+                                    ]}
+                                    value={updateUser.dateFormat}
+                                    onChange={(val) => handleSelectChange('dateFormat', val)}
                                 />
 
                                 <Group justify="flex-end" mt="xs">
@@ -223,7 +266,7 @@ const UserSettingsForm: FC<INFUserSettingsFormProps> = ({ user }) => {
                                     name="currentPassword"
                                     value={updateUserPassword.currentPassword}
                                     onChange={handleChangePassword}
-                                    autoComplete="off" 
+                                    autoComplete="off"
                                 />
 
                                 <Group grow>

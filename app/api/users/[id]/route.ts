@@ -51,7 +51,7 @@ export const PUT = async (
         }
 
         const requestBody = await request.json();
-        const { username, email, password, role, firstName, lastName } = requestBody;
+        const { username, email, password, role, firstName, lastName, defaultTimezone, dateFormat } = requestBody;
 
         const updateUserDto: UpdateUserDto = UpdateUserSchema.parse({
             id,
@@ -61,6 +61,8 @@ export const PUT = async (
             role,
             firstName,
             lastName,
+            defaultTimezone,
+            dateFormat,
         });
 
         const userService = UserService.getInstance();

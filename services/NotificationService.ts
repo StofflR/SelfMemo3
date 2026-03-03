@@ -119,9 +119,13 @@ export class NotificationService {
             const nextTimestamp = futureTimestamps[0].timestamp;
             const nextDate = new Date(nextTimestamp * 1000);
             const timezone = reminder.timezone || 'Europe/Berlin';
+
+            // Get user's date format preference
+            const dateStyle = (primaryUser?.dateFormat as 'full' | 'long' | 'medium' | 'short') || 'full';
+
             nextDateStr = nextDate.toLocaleString('en-US', {
               timeZone: timezone,
-              dateStyle: 'full',
+              dateStyle: dateStyle,
               timeStyle: 'short'
             });
           } else {
